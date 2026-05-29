@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
       new_value: "open",
     });
 
-    // Send confirmation email (non-blocking)
-    sendTicketCreatedEmail(ticket).catch((err) =>
+    // Send confirmation email
+    await sendTicketCreatedEmail(ticket).catch((err) =>
       console.error("[Email] Failed to send created email:", err)
     );
 

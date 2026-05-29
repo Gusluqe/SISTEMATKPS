@@ -90,14 +90,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
     // Send email if status changed
     if (updateFields.status && updateFields.status !== current.status) {
-      sendTicketStatusChangedEmail(updated, current.status, updateFields.status).catch(
+      await sendTicketStatusChangedEmail(updated, current.status, updateFields.status).catch(
         (err) => console.error("[Email] Failed to send status email:", err)
       );
     }
 
     // Send email if priority changed
     if (updateFields.priority && updateFields.priority !== current.priority) {
-      sendTicketPriorityChangedEmail(updated, current.priority, updateFields.priority).catch(
+      await sendTicketPriorityChangedEmail(updated, current.priority, updateFields.priority).catch(
         (err) => console.error("[Email] Failed to send priority email:", err)
       );
     }
@@ -108,7 +108,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       updateFields.technician_id !== current.technician_id;
 
     if (techChanged && updated.technician) {
-      sendTicketAssignedToTechEmail(updated).catch(
+      await sendTicketAssignedToTechEmail(updated).catch(
         (err) => console.error("[Email] Failed to send tech assignment email:", err)
       );
     }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import Image from "next/image";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AREA_OPTIONS } from "@/types";
@@ -15,6 +16,8 @@ import {
   RotateCcw,
   Copy,
   Check,
+  X,
+  FileText,
 } from "lucide-react";
 
 const schema = z.object({
@@ -29,10 +32,17 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+interface AttachedFile {
+  file: File;
+  preview: string | null; // object URL for images, null for PDFs
+}
+
 export function TicketForm() {
   const [success, setSuccess] = useState<{ ticket_number: string; id: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const {
     register,
@@ -44,17 +54,58 @@ export function TicketForm() {
     defaultValues: { priority: "medium", category: "software" },
   });
 
+  const addFiles = (files: FileList | null) => {
+    if (!files) return;
+    setUploadError(null);
+    const next: AttachedFile[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError(`"${file.name}" supera el límite de 5 MB`);
+        continue;
+      }
+      const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf"];
+      if (!allowed.includes(file.type)) {
+        setUploadError(`"${file.name}" no es un tipo permitido (JPG, PNG, GIF, WEBP, PDF)`);
+        continue;
+      }
+      const preview = file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
+      next.push({ file, preview });
+    }
+    setAttachedFiles((prev) => [...prev, ...next]);
+  };
+
+  const removeFile = (index: number) => {
+    setAttachedFiles((prev) => {
+      const copy = [...prev];
+      const removed = copy.splice(index, 1)[0];
+      if (removed.preview) URL.revokeObjectURL(removed.preview);
+      return copy;
+    });
+  };
+
   const onSubmit = async (data: FormData) => {
     setError(null);
     try {
+      // Upload attachments first
+      const urls: string[] = [];
+      for (const { file } of attachedFiles) {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/attachments", { method: "POST", body: fd });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Error al subir adjunto");
+        urls.push(json.url);
+      }
+
       const res = await fetch("/api/tickets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, attachments: urls }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Error al crear el ticket");
       setSuccess({ ticket_number: json.ticket_number, id: json.id });
+      setAttachedFiles([]);
       reset();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error inesperado");
@@ -176,10 +227,62 @@ export function TicketForm() {
         {...register("description")}
       />
 
-      {/* File upload hint */}
-      <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-white/10 text-[#475569] text-sm hover:border-white/20 transition-colors">
-        <Paperclip className="w-4 h-4 flex-shrink-0" />
-        <span>Adjuntar capturas o archivos — próximamente</span>
+      {/* File attachments */}
+      <div>
+        <input
+          id="ticket-file-input"
+          type="file"
+          multiple
+          accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+          className="sr-only"
+          onChange={(e) => addFiles(e.target.files)}
+        />
+        <label
+          htmlFor="ticket-file-input"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-white/10 text-[#475569] text-sm hover:border-[#00e5a0]/30 hover:text-[#64748b] transition-colors cursor-pointer"
+        >
+          <Paperclip className="w-4 h-4 flex-shrink-0" />
+          <span>Adjuntar imágenes o PDF (máx. 5 MB c/u)</span>
+        </label>
+
+        {uploadError && (
+          <p className="text-xs text-red-400 mt-1.5 px-1">{uploadError}</p>
+        )}
+
+        {attachedFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {attachedFiles.map(({ file, preview }, i) => (
+              <div
+                key={i}
+                className="relative group w-20 h-20 rounded-xl overflow-hidden border border-white/10 bg-[#1a1a2e] flex items-center justify-center"
+              >
+                {preview ? (
+                  <Image
+                    src={preview}
+                    alt={file.name}
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-1 p-1">
+                    <FileText className="w-6 h-6 text-[#475569]" />
+                    <span className="text-[9px] text-[#475569] text-center leading-tight line-clamp-2">
+                      {file.name}
+                    </span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeFile(i)}
+                  className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-3 h-3 text-white" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {error && (
