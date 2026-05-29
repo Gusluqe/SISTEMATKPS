@@ -12,7 +12,7 @@ import {
 } from "@/types";
 import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
 import { formatDate, formatRelative } from "@/lib/utils";
-import { ArrowUpDown, Search, Filter, ChevronRight, SlidersHorizontal, X } from "lucide-react";
+import { ArrowUpDown, Search, Filter, ChevronRight, SlidersHorizontal, X, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TicketTableProps {
@@ -88,6 +88,37 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
       return 0;
     });
 
+  const exportCSV = () => {
+    const escape = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const STATUS_ES: Record<string, string> = { open: "Abierto", in_progress: "En Proceso", waiting: "Esperando", resolved: "Resuelto", closed: "Cerrado" };
+    const PRIORITY_ES: Record<string, string> = { low: "Baja", medium: "Media", high: "Alta", urgent: "Urgente" };
+
+    const headers = ["N° Ticket", "Título", "Estado", "Prioridad", "Categoría", "Solicitante", "Email", "Área", "Técnico", "Fecha creación", "Fecha resolución", "Descripción"];
+    const rows = filtered.map((t) => [
+      t.ticket_number,
+      t.title,
+      STATUS_ES[t.status] || t.status,
+      PRIORITY_ES[t.priority] || t.priority,
+      CATEGORY_LABELS[t.category] || t.category,
+      t.requester_name,
+      t.requester_email,
+      t.area,
+      t.technician?.name || "Sin asignar",
+      formatDate(t.created_at),
+      t.resolved_at ? formatDate(t.resolved_at) : "",
+      t.description,
+    ]);
+
+    const csv = "﻿" + [headers, ...rows].map((r) => r.map(escape).join(";")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tickets-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const toggleSort = (field: SortField) =>
     setSort((s) =>
       s.field === field
@@ -140,9 +171,17 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
           <span className="hidden sm:inline">Filtros</span>
           {hasActiveFilters && (
             <span className="w-5 h-5 rounded-full bg-[#00e5a0] text-[#050509] text-[10px] font-bold flex items-center justify-center">
-              {[filterStatus, filterPriority, filterCategory].filter((f) => f !== "all").length}
+              {[filterStatus, filterPriority, filterCategory, filterTechnician].filter((f) => f !== "all").length}
             </span>
           )}
+        </button>
+        <button
+          onClick={exportCSV}
+          title="Exportar a Excel"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 bg-[#1a1a2e] text-sm font-medium text-[#64748b] hover:text-[#94a3b8] transition-colors"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Exportar</span>
         </button>
       </div>
 
