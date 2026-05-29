@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       email,
       password,
       email_confirm: true,
-      user_metadata: { name },
+      user_metadata: { name, role: "technician" },
     });
 
     if (authError) {
