@@ -1,0 +1,147 @@
+
+> proteger-salud-tickets@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.5 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://26.133.161.77:3000
+- Environments: .env.local
+✓ Ready in 442ms
+
+ GET / 200 in 788ms (next.js: 268ms, application-code: 520ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value={0} subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value={0} subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value={0} subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value="—" subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Ticket}
+                          ^^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '1150577320'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function TriangleAlert}
+                          ^^^^^^^^^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '1164457448'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function CircleCheck}
+                          ^^^^^^^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '1339241640'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Clock}
+                          ^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '2669715560'
+}
+ GET /admin/dashboard 200 in 2.8s (next.js: 102ms, application-code: 2.7s)
+[browser] Uncaught Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Ticket}
+                          ^^^^^^^^^^^^^^^
+    at stringify (<anonymous>:1:18)
+ GET / 200 in 152ms (next.js: 6ms, application-code: 147ms)
+ GET / 200 in 90ms (next.js: 6ms, application-code: 84ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value={0} subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value={0} subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value={0} subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value="—" subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Ticket}
+                          ^^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '1150577320'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function TriangleAlert}
+                          ^^^^^^^^^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '1164457448'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function CircleCheck}
+                          ^^^^^^^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '1339241640'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Clock}
+                          ^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '2669715560'
+}
+ GET /admin/dashboard 200 in 2.6s (next.js: 4ms, application-code: 2.6s)
+[browser] Uncaught Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Ticket}
+                          ^^^^^^^^^^^^^^^
+    at stringify (<anonymous>:1:18)
+ GET / 200 in 79ms (next.js: 4ms, application-code: 75ms)
+[POST /api/tickets] {
+  code: 'PGRST205',
+  details: null,
+  hint: null,
+  message: "Could not find the table 'public.tickets' in the schema cache"
+}
+ POST /api/tickets 500 in 608ms (next.js: 170ms, application-code: 437ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value={0} subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value={0} subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value={0} subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... title=... value="—" subtitle=... icon={{$$typeof: ..., render: ...}} variant=...>
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Ticket}
+                          ^^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '1150577320'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function TriangleAlert}
+                          ^^^^^^^^^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '1164457448'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function CircleCheck}
+                          ^^^^^^^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '1339241640'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Clock}
+                          ^^^^^^^^^^^^^^
+    at stringify (<anonymous>) {
+  digest: '2669715560'
+}
+ GET /admin/dashboard 200 in 1835ms (next.js: 3ms, application-code: 1832ms)
+[browser] Uncaught Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Ticket}
+                          ^^^^^^^^^^^^^^^
+    at stringify (<anonymous>:1:18)
