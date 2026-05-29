@@ -13,13 +13,14 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-const navItems = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/tickets", label: "Tickets", icon: Ticket },
-  { href: "/admin/technicians", label: "Técnicos", icon: Users },
+const allNavItems = [
+  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: true },
+  { href: "/admin/tickets", label: "Tickets", icon: Ticket, adminOnly: false },
+  { href: "/admin/technicians", label: "Técnicos", icon: Users, adminOnly: true },
 ];
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({ onNavigate, role }: { onNavigate?: () => void; role: string }) {
+  const navItems = role === "technician" ? allNavItems.filter((i) => !i.adminOnly) : allNavItems;
   const pathname = usePathname();
 
   return (
@@ -99,14 +100,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ role }: { role: string }) {
   const { open, close } = useSidebar();
 
   return (
     <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-60 min-h-screen bg-[#0d0d1a] border-r border-white/[0.06] flex-col flex-shrink-0">
-        <SidebarContent />
+        <SidebarContent role={role} />
       </aside>
 
       {/* Mobile backdrop */}
@@ -133,7 +134,7 @@ export function Sidebar() {
         >
           <X className="w-4 h-4" />
         </button>
-        <SidebarContent onNavigate={close} />
+        <SidebarContent onNavigate={close} role={role} />
       </aside>
     </>
   );

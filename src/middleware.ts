@@ -41,7 +41,20 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && pathname === "/admin/login") {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    const role = user.user_metadata?.role as string | undefined;
+    const dest = role === "technician" ? "/admin/tickets" : "/admin/dashboard";
+    return NextResponse.redirect(new URL(dest, request.url));
+  }
+
+  // Technicians can only access /admin/tickets
+  if (user) {
+    const role = user.user_metadata?.role as string | undefined;
+    if (role === "technician") {
+      const allowed = pathname.startsWith("/admin/tickets");
+      if (!allowed) {
+        return NextResponse.redirect(new URL("/admin/tickets", request.url));
+      }
+    }
   }
 
   return response;
