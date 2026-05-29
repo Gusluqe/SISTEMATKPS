@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createAdminClient();
 
-    // Create Supabase Auth user
+    // Create Supabase Auth user (or link existing one)
+    let authUserId: string;
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -49,24 +50,30 @@ export async function POST(request: NextRequest) {
 
     if (authError) {
       if (authError.message.includes("already been registered")) {
-        return NextResponse.json(
-          { error: "Ya existe un usuario con ese email" },
-          { status: 409 }
-        );
+        // User already exists in Auth — find and link them
+        const { data: existingUsers } = await supabase.auth.admin.listUsers();
+        const existing = existingUsers?.users?.find((u) => u.email === email);
+        if (!existing) {
+          return NextResponse.json({ error: "No se pudo encontrar el usuario existente" }, { status: 409 });
+        }
+        authUserId = existing.id;
+      } else {
+        throw authError;
       }
-      throw authError;
+    } else {
+      authUserId = authData.user.id;
     }
 
     // Insert technician record linked to auth user
     const { data, error } = await supabase
       .from("technicians")
-      .insert({ name, email, active: true, auth_user_id: authData.user.id })
+      .insert({ name, email, active: true, auth_user_id: authUserId })
       .select()
       .single();
 
     if (error) {
-      // Rollback: delete auth user if DB insert fails
-      await supabase.auth.admin.deleteUser(authData.user.id);
+      // Rollback: delete auth user if DB insert fails (only if we created it)
+      if (authData?.user) await supabase.auth.admin.deleteUser(authData.user.id);
       throw error;
     }
 

@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/lib/store/sidebar";
+import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   Ticket,
   Users,
   X,
   ExternalLink,
+  LogOut,
 } from "lucide-react";
 
 const allNavItems = [
@@ -19,9 +21,27 @@ const allNavItems = [
   { href: "/admin/technicians", label: "Técnicos", icon: Users, adminOnly: true },
 ];
 
-function SidebarContent({ onNavigate, role }: { onNavigate?: () => void; role: string }) {
+function SidebarContent({
+  onNavigate,
+  role,
+  userName,
+  userEmail,
+}: {
+  onNavigate?: () => void;
+  role: string;
+  userName: string;
+  userEmail: string;
+}) {
   const navItems = role === "technician" ? allNavItems.filter((i) => !i.adminOnly) : allNavItems;
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+    router.refresh();
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -50,8 +70,7 @@ function SidebarContent({ onNavigate, role }: { onNavigate?: () => void; role: s
           Menú
         </p>
         {navItems.map((item) => {
-          const active =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+          const active = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}
@@ -65,12 +84,7 @@ function SidebarContent({ onNavigate, role }: { onNavigate?: () => void; role: s
                   : "text-[#64748b] font-medium hover:text-[#94a3b8] hover:bg-white/[0.03]"
               )}
             >
-              <item.icon
-                className={cn(
-                  "w-4 h-4 flex-shrink-0",
-                  active ? "text-[#00e5a0]" : "text-[#475569]"
-                )}
-              />
+              <item.icon className={cn("w-4 h-4 flex-shrink-0", active ? "text-[#00e5a0]" : "text-[#475569]")} />
               {item.label}
             </Link>
           );
@@ -82,17 +96,30 @@ function SidebarContent({ onNavigate, role }: { onNavigate?: () => void; role: s
         <Link
           href="/"
           target="_blank"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-[#475569] hover:text-[#64748b] hover:bg-white/[0.03] transition-all duration-150 group"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-[#475569] hover:text-[#64748b] hover:bg-white/[0.03] transition-all duration-150"
           onClick={onNavigate}
         >
           <ExternalLink className="w-4 h-4 flex-shrink-0" />
           <span>Ver formulario público</span>
         </Link>
 
-        <div className="mx-3 mt-2 pt-2 border-t border-white/[0.04]">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00e5a0] animate-pulse flex-shrink-0" />
-            <span className="text-[11px] text-[#334155]">Sistema operativo</span>
+        {/* User info + logout */}
+        <div className="mx-1 mt-1 pt-2 border-t border-white/[0.04]">
+          <div className="flex items-center gap-2.5 px-2 py-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#00e5a0] to-[#2563eb] flex items-center justify-center text-[11px] font-bold text-[#050509] flex-shrink-0">
+              {userName.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-[#94a3b8] truncate">{userName}</p>
+              <p className="text-[10px] text-[#334155] truncate">{userEmail}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Cerrar sesión"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#334155] hover:text-red-400 hover:bg-red-500/10 transition-colors flex-shrink-0"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </div>
@@ -100,14 +127,14 @@ function SidebarContent({ onNavigate, role }: { onNavigate?: () => void; role: s
   );
 }
 
-export function Sidebar({ role }: { role: string }) {
+export function Sidebar({ role, userName, userEmail }: { role: string; userName: string; userEmail: string }) {
   const { open, close } = useSidebar();
 
   return (
     <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-60 min-h-screen bg-[#0d0d1a] border-r border-white/[0.06] flex-col flex-shrink-0">
-        <SidebarContent role={role} />
+        <SidebarContent role={role} userName={userName} userEmail={userEmail} />
       </aside>
 
       {/* Mobile backdrop */}
@@ -134,7 +161,7 @@ export function Sidebar({ role }: { role: string }) {
         >
           <X className="w-4 h-4" />
         </button>
-        <SidebarContent onNavigate={close} role={role} />
+        <SidebarContent onNavigate={close} role={role} userName={userName} userEmail={userEmail} />
       </aside>
     </>
   );
