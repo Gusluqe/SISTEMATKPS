@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   Ticket,
+  Technician,
   TicketStatus,
   TicketPriority,
   TicketCategory,
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils";
 
 interface TicketTableProps {
   tickets: Ticket[];
+  technicians?: Technician[];
 }
 
 type SortField = "created_at" | "priority" | "status" | "ticket_number";
@@ -29,11 +31,12 @@ const statusOrder: Record<TicketStatus, number> = {
   open: 5, in_progress: 4, waiting: 3, resolved: 2, closed: 1,
 };
 
-export function TicketTable({ tickets }: TicketTableProps) {
+export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<TicketStatus | "all">("all");
   const [filterPriority, setFilterPriority] = useState<TicketPriority | "all">("all");
   const [filterCategory, setFilterCategory] = useState<TicketCategory | "all">("all");
+  const [filterTechnician, setFilterTechnician] = useState<string>("all");
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({
     field: "created_at",
     dir: "desc",
@@ -41,12 +44,13 @@ export function TicketTable({ tickets }: TicketTableProps) {
   const [showFilters, setShowFilters] = useState(false);
 
   const hasActiveFilters =
-    filterStatus !== "all" || filterPriority !== "all" || filterCategory !== "all";
+    filterStatus !== "all" || filterPriority !== "all" || filterCategory !== "all" || filterTechnician !== "all";
 
   const clearFilters = () => {
     setFilterStatus("all");
     setFilterPriority("all");
     setFilterCategory("all");
+    setFilterTechnician("all");
   };
 
   const filtered = tickets
@@ -63,7 +67,13 @@ export function TicketTable({ tickets }: TicketTableProps) {
       const matchStatus = filterStatus === "all" || t.status === filterStatus;
       const matchPriority = filterPriority === "all" || t.priority === filterPriority;
       const matchCategory = filterCategory === "all" || t.category === filterCategory;
-      return matchSearch && matchStatus && matchPriority && matchCategory;
+      const matchTechnician =
+        filterTechnician === "all"
+          ? true
+          : filterTechnician === "unassigned"
+          ? !t.technician_id
+          : t.technician_id === filterTechnician;
+      return matchSearch && matchStatus && matchPriority && matchCategory && matchTechnician;
     })
     .sort((a, b) => {
       const dir = sort.dir === "asc" ? 1 : -1;
@@ -177,6 +187,21 @@ export function TicketTable({ tickets }: TicketTableProps) {
               <option key={v} value={v}>{l}</option>
             ))}
           </select>
+
+          {technicians.length > 0 && (
+            <select
+              value={filterTechnician}
+              onChange={(e) => setFilterTechnician(e.target.value)}
+              className="bg-[#1a1a2e] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
+              aria-label="Filtrar por técnico"
+            >
+              <option value="all">Todos los técnicos</option>
+              <option value="unassigned">Sin asignar</option>
+              {technicians.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          )}
 
           {hasActiveFilters && (
             <button

@@ -1,24 +1,26 @@
 import { Header } from "@/components/layout/Header";
 import { TicketTable } from "@/components/tickets/TicketTable";
 import { createAdminClient } from "@/lib/supabase/server";
-import { Ticket } from "@/types";
+import { Ticket, Technician } from "@/types";
 
-async function getTickets(): Promise<Ticket[]> {
+async function getData(): Promise<{ tickets: Ticket[]; technicians: Technician[] }> {
   const supabase = await createAdminClient();
-  const { data, error } = await supabase
-    .from("tickets")
-    .select("*, technician:technicians(id, name, email)")
-    .order("created_at", { ascending: false });
+  const [ticketsRes, techsRes] = await Promise.all([
+    supabase
+      .from("tickets")
+      .select("*, technician:technicians(id, name, email)")
+      .order("created_at", { ascending: false }),
+    supabase.from("technicians").select("*").eq("active", true).order("name"),
+  ]);
 
-  if (error) {
-    console.error(error);
-    return [];
-  }
-  return data || [];
+  return {
+    tickets: ticketsRes.data || [],
+    technicians: techsRes.data || [],
+  };
 }
 
 export default async function TicketsPage() {
-  const tickets = await getTickets();
+  const { tickets, technicians } = await getData();
 
   return (
     <>
@@ -27,7 +29,7 @@ export default async function TicketsPage() {
         subtitle={`${tickets.length} ticket${tickets.length !== 1 ? "s" : ""} en total`}
       />
       <main className="flex-1 p-6 overflow-y-auto animate-fade-in">
-        <TicketTable tickets={tickets} />
+        <TicketTable tickets={tickets} technicians={technicians} />
       </main>
     </>
   );

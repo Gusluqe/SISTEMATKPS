@@ -17,8 +17,10 @@ import {
   Lock,
   Unlock,
   CheckCircle2,
+  RotateCcw,
   Paperclip,
   FileText,
+  Loader2,
 } from "lucide-react";
 
 interface TicketDetailProps {
@@ -36,6 +38,8 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
   const [isInternal, setIsInternal] = useState(true);
   const [addingComment, setAddingComment] = useState(false);
   const [activeTab, setActiveTab] = useState<"comments" | "history">("comments");
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const update = async (fields: Record<string, unknown>) => {
     startTransition(async () => {
@@ -80,6 +84,44 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
     }
   };
 
+  const uploadAttachment = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadError(null);
+    setUploadingFile(true);
+    try {
+      const newUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        if (file.size > 5 * 1024 * 1024) {
+          setUploadError(`"${file.name}" supera los 5 MB`);
+          continue;
+        }
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/attachments", { method: "POST", body: fd });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Error al subir");
+        newUrls.push(json.url);
+      }
+      if (newUrls.length > 0) {
+        const updatedAttachments = [...(ticket.attachments || []), ...newUrls];
+        const res = await fetch(`/api/tickets/${ticket.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ attachments: updatedAttachments, changed_by: changedBy }),
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setTicket((prev) => ({ ...prev, attachments: updated.attachments }));
+          router.refresh();
+        }
+      }
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : "Error al subir");
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 animate-fade-in">
       {/* Main content */}
@@ -121,12 +163,31 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
         </div>
 
         {/* Attachments */}
-        {ticket.attachments && ticket.attachments.length > 0 && (
-          <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5">
-            <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3 flex items-center gap-2">
+        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider flex items-center gap-2">
               <Paperclip className="w-3.5 h-3.5" />
-              Adjuntos ({ticket.attachments.length})
+              Adjuntos ({ticket.attachments?.length || 0})
             </p>
+            <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a1a2e] border border-white/10 text-xs text-[#64748b] hover:text-[#94a3b8] hover:border-white/20 cursor-pointer transition-colors">
+              {uploadingFile ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Paperclip className="w-3.5 h-3.5" />
+              )}
+              Adjuntar
+              <input
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                className="sr-only"
+                onChange={(e) => uploadAttachment(e.target.files)}
+                disabled={uploadingFile}
+              />
+            </label>
+          </div>
+          {uploadError && <p className="text-xs text-red-400 mb-2">{uploadError}</p>}
+          {ticket.attachments && ticket.attachments.length > 0 ? (
             <div className="flex flex-wrap gap-3">
               {ticket.attachments.map((url, i) => {
                 const isPdf = url.toLowerCase().includes(".pdf");
@@ -156,8 +217,10 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
                 );
               })}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-xs text-[#334155]">Sin adjuntos.</p>
+          )}
+        </div>
 
         {/* Tabs: Comments / History */}
         <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl overflow-hidden">
@@ -304,23 +367,23 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
       {/* Sidebar — management */}
       <div className="space-y-4">
         {/* Quick actions */}
-        {ticket.status !== "resolved" && ticket.status !== "closed" && (
-          <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-4">
-            <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
-              Acciones Rápidas
-            </p>
-            <div className="space-y-2">
-              {ticket.status === "open" && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="w-full"
-                  loading={isPending}
-                  onClick={() => update({ status: "in_progress" })}
-                >
-                  Tomar ticket
-                </Button>
-              )}
+        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-4">
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
+            Acciones Rápidas
+          </p>
+          <div className="space-y-2">
+            {ticket.status === "open" && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                loading={isPending}
+                onClick={() => update({ status: "in_progress" })}
+              >
+                Tomar ticket
+              </Button>
+            )}
+            {ticket.status !== "resolved" && ticket.status !== "closed" && (
               <Button
                 variant="outline"
                 size="sm"
@@ -331,9 +394,21 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 Marcar como resuelto
               </Button>
-            </div>
+            )}
+            {(ticket.status === "resolved" || ticket.status === "closed") && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                loading={isPending}
+                onClick={() => update({ status: "open" })}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reabrir ticket
+              </Button>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Status */}
         <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-4">
