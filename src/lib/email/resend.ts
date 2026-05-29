@@ -5,6 +5,7 @@ import {
   ticketStatusChangedTemplate,
   ticketPriorityChangedTemplate,
   ticketAssignedToTechTemplate,
+  newCommentTemplate,
 } from "./templates";
 
 const transporter = nodemailer.createTransport({
@@ -44,6 +45,11 @@ export async function sendTicketPriorityChangedEmail(
   newPriority: string
 ) {
   const { subject, html } = ticketPriorityChangedTemplate(ticket, oldPriority, newPriority);
+  return send(ticket.requester_email, subject, html);
+}
+
+export async function sendNewCommentEmail(ticket: Ticket, commentContent: string, authorName: string) {
+  const { subject, html } = newCommentTemplate(ticket, commentContent, authorName);
   return send(ticket.requester_email, subject, html);
 }
 

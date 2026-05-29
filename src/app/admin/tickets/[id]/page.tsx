@@ -43,6 +43,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
   const authClient = await createClient();
   const { data: { user } } = await authClient.auth.getUser();
   const changedBy = user?.email ?? "Admin";
+  const authorName = (user?.user_metadata?.name as string) || user?.email?.split("@")[0] || "Admin";
 
   const [ticket, technicians] = await Promise.all([
     getTicket(id),
@@ -67,7 +68,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
             Volver a Tickets
           </Link>
         </div>
-        <TicketDetail ticket={ticket} technicians={technicians} changedBy={changedBy} />
+        <TicketDetail ticket={ticket} technicians={technicians} changedBy={changedBy} authorName={authorName} />
       </main>
     </>
   );

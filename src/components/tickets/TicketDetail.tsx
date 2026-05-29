@@ -6,26 +6,29 @@ import { Ticket, Technician, STATUS_LABELS, CATEGORY_LABELS, PRIORITY_LABELS } f
 import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatRelative } from "@/lib/utils";
+import Image from "next/image";
 import {
   Clock,
   User,
   Tag,
-  AlertTriangle,
   MessageSquare,
   History,
   Send,
   Lock,
   Unlock,
   CheckCircle2,
+  Paperclip,
+  FileText,
 } from "lucide-react";
 
 interface TicketDetailProps {
   ticket: Ticket;
   technicians: Technician[];
   changedBy?: string;
+  authorName?: string;
 }
 
-export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin" }: TicketDetailProps) {
+export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin", authorName = "Admin" }: TicketDetailProps) {
   const router = useRouter();
   const [ticket, setTicket] = useState(initial);
   const [isPending, startTransition] = useTransition();
@@ -57,8 +60,8 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          author_name: "Admin",
-          author_email: "admin@protegesalud.com",
+          author_name: authorName,
+          author_email: changedBy,
           content: comment,
           is_internal: isInternal,
         }),
@@ -116,6 +119,45 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
             {ticket.description}
           </p>
         </div>
+
+        {/* Attachments */}
+        {ticket.attachments && ticket.attachments.length > 0 && (
+          <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5">
+            <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Paperclip className="w-3.5 h-3.5" />
+              Adjuntos ({ticket.attachments.length})
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {ticket.attachments.map((url, i) => {
+                const isPdf = url.toLowerCase().includes(".pdf");
+                return (
+                  <a
+                    key={i}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 bg-[#1a1a2e] flex items-center justify-center hover:border-[#00e5a0]/30 transition-colors"
+                  >
+                    {isPdf ? (
+                      <div className="flex flex-col items-center gap-1 p-2">
+                        <FileText className="w-8 h-8 text-[#475569] group-hover:text-[#64748b] transition-colors" />
+                        <span className="text-[9px] text-[#475569] text-center">PDF</span>
+                      </div>
+                    ) : (
+                      <Image
+                        src={url}
+                        alt={`Adjunto ${i + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="96px"
+                      />
+                    )}
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Tabs: Comments / History */}
         <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl overflow-hidden">

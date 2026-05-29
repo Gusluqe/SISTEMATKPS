@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { sendNewCommentEmail } from "@/lib/email/resend";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -34,11 +35,25 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
     if (error) throw error;
 
-    // Update ticket updated_at
     await supabase
       .from("tickets")
       .update({ updated_at: new Date().toISOString() })
       .eq("id", ticket_id);
+
+    // Notify requester when comment is public
+    if (!is_internal) {
+      const { data: ticket } = await supabase
+        .from("tickets")
+        .select("*, technician:technicians(id, name, email)")
+        .eq("id", ticket_id)
+        .single();
+
+      if (ticket) {
+        await sendNewCommentEmail(ticket, content, author_name).catch((err) =>
+          console.error("[Email] Failed to send comment email:", err)
+        );
+      }
+    }
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {

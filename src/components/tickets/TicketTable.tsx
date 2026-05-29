@@ -57,7 +57,9 @@ export function TicketTable({ tickets }: TicketTableProps) {
         t.title.toLowerCase().includes(q) ||
         t.ticket_number.toLowerCase().includes(q) ||
         t.requester_name.toLowerCase().includes(q) ||
-        t.area.toLowerCase().includes(q);
+        t.requester_email.toLowerCase().includes(q) ||
+        t.area.toLowerCase().includes(q) ||
+        (t.technician?.name?.toLowerCase().includes(q) ?? false);
       const matchStatus = filterStatus === "all" || t.status === filterStatus;
       const matchPriority = filterPriority === "all" || t.priority === filterPriority;
       const matchCategory = filterCategory === "all" || t.category === filterCategory;
@@ -109,7 +111,7 @@ export function TicketTable({ tickets }: TicketTableProps) {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por título, N° o solicitante..."
+            placeholder="Buscar por título, N°, solicitante, email, técnico..."
             aria-label="Buscar tickets"
             className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm text-[#f8fafc] placeholder:text-[#334155] focus:outline-none focus:border-[#00e5a0]/40 focus:ring-1 focus:ring-[#00e5a0]/20"
           />

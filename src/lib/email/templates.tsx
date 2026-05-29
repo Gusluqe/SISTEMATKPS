@@ -472,3 +472,62 @@ export function ticketPriorityChangedTemplate(
 
   return { subject, html };
 }
+
+export function newCommentTemplate(
+  ticket: Ticket,
+  commentContent: string,
+  authorName: string
+): { subject: string; html: string } {
+  const subject = `[${ticket.ticket_number}] Nuevo comentario en tu ticket`;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8" /></head>
+<body style="margin:0;padding:0;background-color:#0a0a14;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a14;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#12121f;border-radius:16px;overflow:hidden;border:1px solid rgba(0,229,160,0.15);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#00e5a0,#2563eb);padding:32px 40px;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td>
+                <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:2px;font-weight:600;">PROTEGER SALUD · Soporte Técnico</p>
+                <h1 style="margin:8px 0 0;font-size:22px;color:#fff;font-weight:700;">Nuevo Comentario</h1>
+              </td>
+              <td align="right">
+                <div style="background:rgba(255,255,255,0.15);border-radius:10px;padding:10px 16px;">
+                  <p style="margin:0;font-size:10px;color:rgba(255,255,255,0.7);">TICKET N°</p>
+                  <p style="margin:4px 0 0;font-size:16px;color:#fff;font-weight:800;font-family:monospace;">${ticket.ticket_number}</p>
+                </div>
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px 40px;">
+            <p style="margin:0 0 20px;font-size:15px;color:#94a3b8;">Hola <strong style="color:#f1f5f9;">${ticket.requester_name}</strong>, el equipo técnico dejó un comentario en tu ticket.</p>
+            <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(0,229,160,0.12);padding:20px;margin-bottom:20px;">
+              <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#00e5a0;">${authorName}</p>
+              <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.7;white-space:pre-wrap;">${commentContent}</p>
+            </div>
+            <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;">
+              <p style="margin:0 0 4px;font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:1px;">Tu ticket</p>
+              <p style="margin:0;font-size:14px;color:#f1f5f9;font-weight:600;">${ticket.title}</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0d0d1a;">
+            <p style="margin:0;font-size:12px;color:#334155;text-align:center;">Mensaje automático · <strong style="color:#00e5a0;">PROTEGER SALUD</strong> · Soporte Técnico</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+  `;
+
+  return { subject, html };
+}
