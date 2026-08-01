@@ -39,6 +39,9 @@ export interface Ticket {
   created_at: string;
   updated_at: string;
   resolved_at: string | null;
+  first_response_at: string | null;
+  sla_reminder_sent_at: string | null;
+  rating: number | null;
   comments?: TicketComment[];
   history?: TicketHistory[];
 }
@@ -66,7 +69,8 @@ export interface TicketHistory {
 export interface Technician {
   id: string;
   name: string;
-  email: string;
+  // Sin email el técnico no recibe notificaciones; se puede cargar después
+  email: string | null;
   avatar_url: string | null;
   active: boolean;
   sectors: TicketSector[];

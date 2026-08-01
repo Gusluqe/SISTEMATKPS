@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { sendNewCommentEmail } from "@/lib/email/resend";
+import { sendNewCommentEmail, sendNewCommentToTechEmail } from "@/lib/email/resend";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -35,20 +35,39 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
     if (error) throw error;
 
-    await supabase
+    const { data: ticket } = await supabase
       .from("tickets")
-      .update({ updated_at: new Date().toISOString() })
-      .eq("id", ticket_id);
+      .select("*, technician:technicians(id, name, email)")
+      .eq("id", ticket_id)
+      .single();
 
-    // Notify requester when comment is public
-    if (!is_internal) {
-      const { data: ticket } = await supabase
-        .from("tickets")
-        .select("*, technician:technicians(id, name, email)")
-        .eq("id", ticket_id)
-        .single();
+    // Un comentario público que no es del solicitante cuenta como primera
+    // respuesta del equipo (SLA)
+    const isFromRequester =
+      !!ticket &&
+      !!author_email &&
+      author_email.toLowerCase() === (ticket.requester_email || "").toLowerCase();
 
-      if (ticket) {
+    const tickerUpdate: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (ticket && !is_internal && !isFromRequester && !ticket.first_response_at) {
+      tickerUpdate.first_response_at = new Date().toISOString();
+    }
+    await supabase.from("tickets").update(tickerUpdate).eq("id", ticket_id);
+
+    if (ticket && !is_internal) {
+      if (isFromRequester) {
+        // El solicitante respondió → avisar al técnico asignado (o al equipo del sector)
+        const { data: team } = await supabase
+          .from("technicians")
+          .select("email")
+          .eq("active", true)
+          .contains("sectors", [ticket.sector]);
+        const fallback = (team || []).map((t) => t.email).filter(Boolean);
+        await sendNewCommentToTechEmail(ticket, content, author_name, fallback).catch((err) =>
+          console.error("[Email] Failed to send comment-to-tech email:", err)
+        );
+      } else {
+        // El equipo comentó → avisar al solicitante
         await sendNewCommentEmail(ticket, content, author_name).catch((err) =>
           console.error("[Email] Failed to send comment email:", err)
         );

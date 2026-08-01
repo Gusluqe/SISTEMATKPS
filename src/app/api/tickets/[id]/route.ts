@@ -97,6 +97,16 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       updatePayload.resolved_at = new Date().toISOString();
     }
 
+    // Primera acción del equipo sobre un ticket abierto = primera respuesta (SLA)
+    if (
+      updateFields.status &&
+      updateFields.status !== "open" &&
+      updateFields.status !== current.status &&
+      !current.first_response_at
+    ) {
+      updatePayload.first_response_at = new Date().toISOString();
+    }
+
     const { data: updated, error } = await supabase
       .from("tickets")
       .update(updatePayload)
@@ -154,7 +164,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         .eq("active", true)
         .contains("sectors", [updateFields.sector]);
 
-      const teamEmails = (team || []).map((t) => t.email);
+      const teamEmails = (team || []).map((t) => t.email).filter(Boolean);
       if (teamEmails.length > 0) {
         await sendNewTicketToTeamEmail(updated, teamEmails).catch(
           (err) => console.error("[Email] Failed to notify new sector team:", err)

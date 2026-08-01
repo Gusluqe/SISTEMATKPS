@@ -1,12 +1,15 @@
 import nodemailer from "nodemailer";
 import { Ticket } from "@/types";
+import { ratingUrl } from "@/lib/sla";
 import {
   ticketCreatedTemplate,
   ticketStatusChangedTemplate,
   ticketPriorityChangedTemplate,
   ticketAssignedToTechTemplate,
   newCommentTemplate,
+  newCommentForTechTemplate,
   newTicketForTeamTemplate,
+  slaReminderTemplate,
 } from "./templates";
 
 const transporter = nodemailer.createTransport({
@@ -19,7 +22,9 @@ const transporter = nodemailer.createTransport({
 
 const FROM = `"Soporte Técnico · Proteger Salud" <${process.env.GMAIL_USER}>`;
 
-async function send(to: string, subject: string, html: string) {
+async function send(to: string | null | undefined, subject: string, html: string) {
+  // Los técnicos sin email cargado simplemente no reciben avisos
+  if (!to) return { success: false, error: "No recipient" };
   try {
     await transporter.sendMail({ from: FROM, to, subject, html });
     return { success: true };
@@ -29,22 +34,27 @@ async function send(to: string, subject: string, html: string) {
   }
 }
 
+async function sendBcc(emails: (string | null | undefined)[], subject: string, html: string) {
+  const bcc = emails.filter((e): e is string => Boolean(e));
+  if (bcc.length === 0) return { success: false, error: "No recipients" };
+  try {
+    // BCC: cada técnico recibe el aviso sin ver los emails del resto
+    await transporter.sendMail({ from: FROM, bcc, subject, html });
+    return { success: true };
+  } catch (err) {
+    console.error("[Email] Error sending bcc", err);
+    return { success: false, error: err };
+  }
+}
+
 export async function sendTicketCreatedEmail(ticket: Ticket) {
   const { subject, html } = ticketCreatedTemplate(ticket);
   return send(ticket.requester_email, subject, html);
 }
 
-export async function sendNewTicketToTeamEmail(ticket: Ticket, emails: string[]) {
-  if (emails.length === 0) return { success: false, error: "No team emails" };
+export async function sendNewTicketToTeamEmail(ticket: Ticket, emails: (string | null)[]) {
   const { subject, html } = newTicketForTeamTemplate(ticket);
-  try {
-    // BCC: cada técnico recibe el aviso sin ver los emails del resto
-    await transporter.sendMail({ from: FROM, bcc: emails, subject, html });
-    return { success: true };
-  } catch (err) {
-    console.error("[Email] Error sending team notification", err);
-    return { success: false, error: err };
-  }
+  return sendBcc(emails, subject, html);
 }
 
 export async function sendTicketAssignedToTechEmail(ticket: Ticket) {
@@ -62,9 +72,22 @@ export async function sendTicketPriorityChangedEmail(
   return send(ticket.requester_email, subject, html);
 }
 
+// Comentario del equipo → aviso al solicitante
 export async function sendNewCommentEmail(ticket: Ticket, commentContent: string, authorName: string) {
   const { subject, html } = newCommentTemplate(ticket, commentContent, authorName);
   return send(ticket.requester_email, subject, html);
+}
+
+// Comentario del solicitante → aviso al técnico asignado (o al equipo del sector)
+export async function sendNewCommentToTechEmail(
+  ticket: Ticket,
+  commentContent: string,
+  authorName: string,
+  fallbackEmails: (string | null)[] = []
+) {
+  const { subject, html } = newCommentForTechTemplate(ticket, commentContent, authorName);
+  if (ticket.technician?.email) return send(ticket.technician.email, subject, html);
+  return sendBcc(fallbackEmails, subject, html);
 }
 
 export async function sendTicketStatusChangedEmail(
@@ -72,6 +95,18 @@ export async function sendTicketStatusChangedEmail(
   oldStatus: string,
   newStatus: string
 ) {
-  const { subject, html } = ticketStatusChangedTemplate(ticket, oldStatus, newStatus);
+  // Al resolver, el email incluye la encuesta de satisfacción (1-5 estrellas)
+  const ratingBase = newStatus === "resolved" ? ratingUrl(ticket.id) : undefined;
+  const { subject, html } = ticketStatusChangedTemplate(ticket, oldStatus, newStatus, ratingBase);
   return send(ticket.requester_email, subject, html);
+}
+
+// Recordatorio de SLA vencido al equipo del sector (+ admins)
+export async function sendSlaReminderEmail(
+  ticket: Ticket,
+  emails: (string | null)[],
+  hoursOverdue: number
+) {
+  const { subject, html } = slaReminderTemplate(ticket, hoursOverdue);
+  return sendBcc(emails, subject, html);
 }

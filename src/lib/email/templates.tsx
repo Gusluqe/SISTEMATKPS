@@ -129,7 +129,9 @@ export function ticketCreatedTemplate(ticket: Ticket): {
 export function ticketStatusChangedTemplate(
   ticket: Ticket,
   oldStatus: string,
-  newStatus: string
+  newStatus: string,
+  // Base del link de calificación; con &score=1..5 registra el voto
+  ratingBase?: string
 ): { subject: string; html: string } {
   const statusLabel = STATUS_LABELS[ticket.status] || newStatus;
   const subject = `[${ticket.ticket_number}] Actualización de ticket: ${statusLabel}`;
@@ -198,6 +200,25 @@ export function ticketStatusChangedTemplate(
                 ticket.status === "resolved"
                   ? `<div style="margin-top:20px;padding:16px;background:rgba(0,229,160,0.05);border-left:3px solid #00e5a0;border-radius:4px;">
                 <p style="margin:0;font-size:13px;color:#94a3b8;">Tu ticket fue marcado como <strong style="color:#00e5a0;">Resuelto</strong>. Si el problema persiste, no dudes en crear un nuevo ticket.</p>
+              </div>`
+                  : ""
+              }
+
+              ${
+                ticket.status === "resolved" && ratingBase
+                  ? `<div style="margin-top:20px;background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:24px;text-align:center;">
+                <p style="margin:0 0 6px;font-size:14px;color:#f1f5f9;font-weight:700;">¿Cómo fue la atención?</p>
+                <p style="margin:0 0 18px;font-size:12px;color:#64748b;">Tocá una estrella para calificar (1 = mala, 5 = excelente)</p>
+                <table cellpadding="0" cellspacing="0" align="center"><tr>
+                  ${[1, 2, 3, 4, 5]
+                    .map(
+                      (n) => `<td style="padding:0 5px;">
+                    <a href="${ratingBase}&score=${n}" style="display:inline-block;width:44px;height:44px;line-height:44px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;font-size:20px;text-decoration:none;text-align:center;">⭐</a>
+                    <p style="margin:4px 0 0;font-size:11px;color:#64748b;">${n}</p>
+                  </td>`
+                    )
+                    .join("")}
+                </tr></table>
               </div>`
                   : ""
               }
@@ -520,6 +541,133 @@ export function newCommentTemplate(
         <tr>
           <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0e1d38;">
             <p style="margin:0;font-size:12px;color:#44597c;text-align:center;">Mensaje automático · <strong style="color:#00e5a0;">PROTEGER SALUD</strong> · Soporte Técnico</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+  `;
+
+  return { subject, html };
+}
+
+// Aviso al técnico asignado cuando el solicitante comenta su ticket
+export function newCommentForTechTemplate(
+  ticket: Ticket,
+  commentContent: string,
+  authorName: string
+): { subject: string; html: string } {
+  const subject = `[${ticket.ticket_number}] ${authorName} respondió en el ticket`;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8" /></head>
+<body style="margin:0;padding:0;background-color:#0a1830;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a1830;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#13233f;border-radius:16px;overflow:hidden;border:1px solid rgba(37,99,235,0.2);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#2563eb,#8b5cf6);padding:32px 40px;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td>
+                <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:2px;font-weight:600;">PROTEGER SALUD · Soporte Técnico</p>
+                <h1 style="margin:8px 0 0;font-size:22px;color:#fff;font-weight:700;">Respuesta del solicitante</h1>
+              </td>
+              <td align="right">
+                <div style="background:rgba(255,255,255,0.15);border-radius:10px;padding:10px 16px;">
+                  <p style="margin:0;font-size:10px;color:rgba(255,255,255,0.7);">TICKET N°</p>
+                  <p style="margin:4px 0 0;font-size:16px;color:#fff;font-weight:800;font-family:monospace;">${ticket.ticket_number}</p>
+                </div>
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px 40px;">
+            <p style="margin:0 0 20px;font-size:15px;color:#94a3b8;"><strong style="color:#f1f5f9;">${authorName}</strong> dejó un comentario en un ticket que tenés asignado.</p>
+            <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(37,99,235,0.15);padding:20px;margin-bottom:20px;">
+              <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#60a5fa;">${authorName}</p>
+              <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.7;white-space:pre-wrap;">${commentContent}</p>
+            </div>
+            <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;">
+              <p style="margin:0 0 4px;font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:1px;">Ticket</p>
+              <p style="margin:0;font-size:14px;color:#f1f5f9;font-weight:600;">${ticket.title}</p>
+              <p style="margin:4px 0 0;font-size:12px;color:#64748b;">${ticket.requester_name} · ${ticket.area}</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0e1d38;">
+            <p style="margin:0;font-size:12px;color:#44597c;text-align:center;">Mensaje automático · <strong style="color:#60a5fa;">PROTEGER SALUD</strong> · Soporte Técnico</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+  `;
+
+  return { subject, html };
+}
+
+// Recordatorio al equipo: ticket sin primera respuesta con el SLA vencido
+export function slaReminderTemplate(
+  ticket: Ticket,
+  hoursOverdue: number
+): { subject: string; html: string } {
+  const priorityLabel = PRIORITY_LABELS[ticket.priority] || ticket.priority;
+  const sectorLabel = SECTOR_LABELS[ticket.sector] || ticket.sector;
+  const subject = `⚠️ [${ticket.ticket_number}] SLA vencido — ${priorityLabel} sin respuesta`;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8" /></head>
+<body style="margin:0;padding:0;background-color:#0a1830;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a1830;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#13233f;border-radius:16px;overflow:hidden;border:1px solid rgba(239,68,68,0.3);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#ef4444,#f59e0b);padding:32px 40px;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td>
+                <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:2px;font-weight:600;">PROTEGER SALUD · Equipo de ${sectorLabel}</p>
+                <h1 style="margin:8px 0 0;font-size:22px;color:#fff;font-weight:700;">⚠️ Ticket sin respuesta</h1>
+              </td>
+              <td align="right">
+                <div style="background:rgba(255,255,255,0.2);border-radius:10px;padding:10px 16px;">
+                  <p style="margin:0;font-size:10px;color:rgba(255,255,255,0.8);">TICKET N°</p>
+                  <p style="margin:4px 0 0;font-size:16px;color:#fff;font-weight:800;font-family:monospace;">${ticket.ticket_number}</p>
+                </div>
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px 40px;">
+            <p style="margin:0 0 20px;font-size:15px;color:#94a3b8;line-height:1.6;">
+              Este ticket de prioridad <strong style="color:#f59e0b;">${priorityLabel}</strong> lleva
+              <strong style="color:#ef4444;">${hoursOverdue}h más que el tiempo prometido</strong> sin primera respuesta del equipo.
+            </p>
+            <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:24px;margin-bottom:20px;">
+              <p style="margin:0 0 4px;font-size:16px;color:#f1f5f9;font-weight:700;">${ticket.title}</p>
+              <p style="margin:0 0 12px;font-size:13px;color:#64748b;">${ticket.requester_name} · ${ticket.area}</p>
+              <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">${ticket.description.substring(0, 200)}${ticket.description.length > 200 ? "..." : ""}</p>
+            </div>
+            <div style="padding:14px 16px;background:rgba(239,68,68,0.06);border-left:3px solid #ef4444;border-radius:4px;">
+              <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">
+                Entrá al panel y tomalo, o cambiale el estado para que el solicitante sepa que está en proceso.
+              </p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0e1d38;">
+            <p style="margin:0;font-size:12px;color:#44597c;text-align:center;">Mensaje automático · <strong style="color:#ef4444;">PROTEGER SALUD</strong> · Control de SLA</p>
           </td>
         </tr>
       </table>

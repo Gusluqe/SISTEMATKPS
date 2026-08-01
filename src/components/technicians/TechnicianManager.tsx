@@ -63,7 +63,7 @@ function TechForm({
   loading,
   error,
 }: {
-  initial?: { name: string; email: string; sectors: TicketSector[]; role: "admin" | "technician" };
+  initial?: { name: string; email: string | null; sectors: TicketSector[]; role: "admin" | "technician" };
   onSubmit: (name: string, email: string, password: string, sectors: TicketSector[], role: "admin" | "technician") => void;
   onClose: () => void;
   loading: boolean;
@@ -108,16 +108,21 @@ function TechForm({
       </div>
       <div>
         <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
-          Email *
+          {isEdit ? "Email (vacío = no recibe avisos)" : "Email *"}
         </label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="juan@protegesalud.com"
-          required
+          placeholder="juan@protegersalud.com"
+          required={!isEdit}
           className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#44597c] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
         />
+        {isEdit && !email && (
+          <p className="text-xs text-amber-400 mt-1.5">
+            Sin email este técnico no recibe notificaciones de tickets.
+          </p>
+        )}
       </div>
       <div>
         <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
@@ -255,7 +260,7 @@ export function TechnicianManager({
     setLoading(true);
     setFormError(null);
     try {
-      const body: Record<string, unknown> = { name, email, sectors, role };
+      const body: Record<string, unknown> = { name, email: email.trim() || null, sectors, role };
       if (password) body.password = password;
       const res = await fetch(`/api/technicians/${editTech.id}`, {
         method: "PATCH",
@@ -368,9 +373,15 @@ export function TechnicianManager({
                         {tech.active ? "Activo" : "Inactivo"}
                       </span>
                     </div>
-                    <p className="text-xs text-[#475569] truncate mt-0.5">
-                      {tech.email}
-                    </p>
+                    {tech.email ? (
+                      <p className="text-xs text-[#475569] truncate mt-0.5">
+                        {tech.email}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-amber-400/80 truncate mt-0.5">
+                        Sin email — no recibe avisos
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {tech.role === "admin" && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-amber-400 font-semibold">

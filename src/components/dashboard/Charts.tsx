@@ -12,6 +12,8 @@ import {
   Pie,
   Cell,
   Legend,
+  AreaChart,
+  Area,
 } from "recharts";
 import { DashboardMetrics, CATEGORY_LABELS, STATUS_LABELS } from "@/types";
 
@@ -97,6 +99,88 @@ export function CategoryChart({ metrics }: ChartsProps) {
             ))}
           </Bar>
         </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export interface TrendPoint {
+  week: string;
+  creados: number;
+  resueltos: number;
+}
+
+// Tickets creados vs. resueltos por semana: muestra si el equipo da abasto
+export function TrendChart({ data }: { data: TrendPoint[] }) {
+  const hasData = data.some((d) => d.creados > 0 || d.resueltos > 0);
+
+  if (!hasData) {
+    return (
+      <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5 flex flex-col items-center justify-center h-[290px]">
+        <p className="text-xs font-semibold text-[#475569] uppercase tracking-wider mb-2">Tendencia semanal</p>
+        <p className="text-sm text-[#44597c]">Sin datos todavía</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5">
+      <div className="flex items-center justify-between mb-5">
+        <p className="text-xs font-semibold text-[#475569] uppercase tracking-wider">
+          Tendencia semanal
+        </p>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-[11px] text-[#64748b]">
+            <span className="w-2 h-2 rounded-full bg-[#3b82f6]" /> Creados
+          </span>
+          <span className="flex items-center gap-1.5 text-[11px] text-[#64748b]">
+            <span className="w-2 h-2 rounded-full bg-[#00e5a0]" /> Resueltos
+          </span>
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height={220}>
+        <AreaChart data={data} margin={{ top: 4, right: 0, left: -24, bottom: 0 }}>
+          <defs>
+            <linearGradient id="gradCreados" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="gradResueltos" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#00e5a0" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="#00e5a0" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.04)" vertical={false} />
+          <XAxis
+            dataKey="week"
+            tick={{ fill: "#475569", fontSize: 10, fontWeight: 500 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fill: "#475569", fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+            allowDecimals={false}
+          />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,0.08)" }} />
+          <Area
+            type="monotone"
+            dataKey="creados"
+            name="Creados"
+            stroke="#3b82f6"
+            strokeWidth={2}
+            fill="url(#gradCreados)"
+          />
+          <Area
+            type="monotone"
+            dataKey="resueltos"
+            name="Resueltos"
+            stroke="#00e5a0"
+            strokeWidth={2}
+            fill="url(#gradResueltos)"
+          />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

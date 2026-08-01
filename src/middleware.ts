@@ -43,10 +43,13 @@ export async function middleware(request: NextRequest) {
     | undefined;
 
   if (pathname.startsWith("/api")) {
-    // Únicos endpoints públicos: crear ticket y subir adjunto (formulario)
+    // Endpoints públicos: crear ticket y subir adjunto (formulario), calificar
+    // desde el email (protegido por token firmado) y el cron (protegido por clave)
     const isPublic =
-      request.method === "POST" &&
-      (pathname === "/api/tickets" || pathname === "/api/attachments");
+      (request.method === "POST" &&
+        (pathname === "/api/tickets" || pathname === "/api/attachments")) ||
+      (request.method === "GET" &&
+        (/^\/api\/tickets\/[^/]+\/rating$/.test(pathname) || pathname === "/api/cron"));
 
     if (!isPublic && !user) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
