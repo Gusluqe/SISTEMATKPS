@@ -1,13 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Image from "next/image";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { AREA_OPTIONS } from "@/types";
+import {
+  SUCURSAL_GROUPS,
+  SUCURSALES,
+  SECTOR_LABELS,
+  SECTOR_DESCRIPTIONS,
+  SECTOR_CATEGORIES,
+  CATEGORY_LABELS,
+  TicketSector,
+} from "@/types";
 import {
   Paperclip,
   Send,
@@ -18,17 +26,27 @@ import {
   Check,
   X,
   FileText,
+  MonitorSmartphone,
+  ShoppingCart,
+  Wrench,
 } from "lucide-react";
 
 const schema = z.object({
   requester_name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   requester_email: z.string().email("Email inválido"),
-  area: z.string().min(1, "Seleccioná un área"),
+  area: z.string().min(1, "Seleccioná tu sucursal"),
+  sector: z.enum(["sistemas", "ecommerce", "mantenimiento"]),
   priority: z.enum(["low", "medium", "high", "urgent"]),
-  category: z.enum(["hardware", "software", "internet", "printers", "systems", "users", "ecommerce", "other"]),
+  category: z.enum(["hardware", "software", "internet", "printers", "systems", "users", "ecommerce", "maintenance", "woxi", "other"]),
   title: z.string().min(5, "El título debe tener al menos 5 caracteres"),
   description: z.string().min(20, "La descripción debe tener al menos 20 caracteres"),
 });
+
+const SECTOR_ICONS: Record<TicketSector, typeof Wrench> = {
+  sistemas: MonitorSmartphone,
+  ecommerce: ShoppingCart,
+  mantenimiento: Wrench,
+};
 
 type FormData = z.infer<typeof schema>;
 
@@ -49,10 +67,31 @@ export function TicketForm() {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    watch,
+    setValue,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { priority: "medium", category: "software" },
+    defaultValues: { priority: "medium", category: "software", sector: "sistemas" },
   });
+
+  const sector = watch("sector");
+  const area = watch("area");
+
+  // La sucursal queda recordada en el equipo: la próxima vez ya viene elegida
+  useEffect(() => {
+    const saved = localStorage.getItem("tk-sucursal");
+    if (saved && SUCURSALES.includes(saved)) setValue("area", saved);
+  }, [setValue]);
+
+  useEffect(() => {
+    if (area) localStorage.setItem("tk-sucursal", area);
+  }, [area]);
+
+  const selectSector = (s: TicketSector) => {
+    setValue("sector", s);
+    // Fuera de Sistemas la categoría queda fija según el sector
+    setValue("category", SECTOR_CATEGORIES[s][0]);
+  };
 
   const addFiles = (files: FileList | null) => {
     if (!files) return;
@@ -107,6 +146,8 @@ export function TicketForm() {
       setSuccess({ ticket_number: json.ticket_number, id: json.id });
       setAttachedFiles([]);
       reset();
+      const saved = localStorage.getItem("tk-sucursal");
+      if (saved && SUCURSALES.includes(saved)) setValue("area", saved);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error inesperado");
     }
@@ -132,7 +173,7 @@ export function TicketForm() {
 
         <button
           onClick={copyTicketNumber}
-          className="group inline-flex items-center gap-3 bg-[#1a1a2e] border border-[#00e5a0]/25 hover:border-[#00e5a0]/50 rounded-2xl px-6 py-4 mb-5 transition-colors"
+          className="group inline-flex items-center gap-3 bg-[#1c3054] border border-[#00e5a0]/25 hover:border-[#00e5a0]/50 rounded-2xl px-6 py-4 mb-5 transition-colors"
           title="Copiar número de ticket"
         >
           <p className="text-2xl font-mono font-bold text-[#00e5a0]">
@@ -141,7 +182,7 @@ export function TicketForm() {
           {copied ? (
             <Check className="w-4 h-4 text-[#00e5a0]" />
           ) : (
-            <Copy className="w-4 h-4 text-[#334155] group-hover:text-[#64748b] transition-colors" />
+            <Copy className="w-4 h-4 text-[#44597c] group-hover:text-[#64748b] transition-colors" />
           )}
         </button>
 
@@ -180,17 +221,57 @@ export function TicketForm() {
       </div>
 
       <Select
-        label="Área / Sector *"
+        label="Sucursal / Ubicación *"
         error={errors.area?.message}
         {...register("area")}
       >
-        <option value="">Seleccionar área</option>
-        {AREA_OPTIONS.map((area) => (
-          <option key={area} value={area}>
-            {area}
-          </option>
+        <option value="">¿Desde dónde nos escribís?</option>
+        {Object.entries(SUCURSAL_GROUPS).map(([group, options]) => (
+          <optgroup key={group} label={group}>
+            {options.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </optgroup>
         ))}
       </Select>
+
+      {/* Sector destino: define qué equipo recibe el ticket */}
+      <div>
+        <p className="block text-xs font-semibold text-[#64748b] mb-1.5">
+          ¿Para qué área es el pedido? *
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {(Object.keys(SECTOR_LABELS) as TicketSector[]).map((s) => {
+            const Icon = SECTOR_ICONS[s];
+            const active = sector === s;
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => selectSector(s)}
+                aria-pressed={active}
+                className={`flex sm:flex-col items-center sm:items-start gap-3 sm:gap-2 rounded-xl border px-4 py-3 text-left transition-colors ${
+                  active
+                    ? "bg-[#00e5a0]/10 border-[#00e5a0]/40 text-[#00e5a0]"
+                    : "bg-[#1c3054] border-white/10 text-[#64748b] hover:border-white/20"
+                }`}
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span>
+                  <span className={`block text-sm font-semibold ${active ? "text-[#00e5a0]" : "text-[#94a3b8]"}`}>
+                    {SECTOR_LABELS[s]}
+                  </span>
+                  <span className="block text-[11px] leading-tight mt-0.5">
+                    {SECTOR_DESCRIPTIONS[s]}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Select label="Prioridad *" {...register("priority")}>
@@ -200,16 +281,22 @@ export function TicketForm() {
           <option value="urgent">Urgente</option>
         </Select>
 
-        <Select label="Categoría *" {...register("category")}>
-          <option value="hardware">Hardware</option>
-          <option value="software">Software</option>
-          <option value="internet">Internet</option>
-          <option value="printers">Impresoras</option>
-          <option value="systems">Sistemas</option>
-          <option value="users">Usuarios</option>
-          <option value="ecommerce">E-Commerce</option>
-          <option value="other">Otro</option>
-        </Select>
+        {sector === "sistemas" ? (
+          <Select label="Categoría *" {...register("category")}>
+            {SECTOR_CATEGORIES.sistemas.map((c) => (
+              <option key={c} value={c}>
+                {CATEGORY_LABELS[c]}
+              </option>
+            ))}
+          </Select>
+        ) : (
+          <div className="flex flex-col justify-end">
+            <p className="block text-xs font-semibold text-[#64748b] mb-1.5">Va dirigido a</p>
+            <div className="bg-[#1c3054] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#94a3b8]">
+              Equipo de {SECTOR_LABELS[sector]}
+            </div>
+          </div>
+        )}
       </div>
 
       <Input
@@ -254,7 +341,7 @@ export function TicketForm() {
             {attachedFiles.map(({ file, preview }, i) => (
               <div
                 key={i}
-                className="relative group w-20 h-20 rounded-xl overflow-hidden border border-white/10 bg-[#1a1a2e] flex items-center justify-center"
+                className="relative group w-20 h-20 rounded-xl overflow-hidden border border-white/10 bg-[#1c3054] flex items-center justify-center"
               >
                 {preview ? (
                   <Image

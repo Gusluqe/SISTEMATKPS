@@ -6,6 +6,7 @@ import {
   ticketPriorityChangedTemplate,
   ticketAssignedToTechTemplate,
   newCommentTemplate,
+  newTicketForTeamTemplate,
 } from "./templates";
 
 const transporter = nodemailer.createTransport({
@@ -31,6 +32,19 @@ async function send(to: string, subject: string, html: string) {
 export async function sendTicketCreatedEmail(ticket: Ticket) {
   const { subject, html } = ticketCreatedTemplate(ticket);
   return send(ticket.requester_email, subject, html);
+}
+
+export async function sendNewTicketToTeamEmail(ticket: Ticket, emails: string[]) {
+  if (emails.length === 0) return { success: false, error: "No team emails" };
+  const { subject, html } = newTicketForTeamTemplate(ticket);
+  try {
+    // BCC: cada técnico recibe el aviso sin ver los emails del resto
+    await transporter.sendMail({ from: FROM, bcc: emails, subject, html });
+    return { success: true };
+  } catch (err) {
+    console.error("[Email] Error sending team notification", err);
+    return { success: false, error: err };
+  }
 }
 
 export async function sendTicketAssignedToTechEmail(ticket: Ticket) {

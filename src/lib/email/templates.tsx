@@ -1,4 +1,4 @@
-import { Ticket, STATUS_LABELS, PRIORITY_LABELS } from "@/types";
+import { Ticket, STATUS_LABELS, PRIORITY_LABELS, SECTOR_LABELS, CATEGORY_LABELS } from "@/types";
 import { formatDate } from "@/lib/utils";
 
 export function ticketCreatedTemplate(ticket: Ticket): {
@@ -15,11 +15,11 @@ export function ticketCreatedTemplate(ticket: Ticket): {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ticket de Soporte</title>
 </head>
-<body style="margin:0;padding:0;background-color:#0a0a14;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a14;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#0a1830;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a1830;padding:40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background:#12121f;border-radius:16px;overflow:hidden;border:1px solid rgba(0,229,160,0.15);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#13233f;border-radius:16px;overflow:hidden;border:1px solid rgba(0,229,160,0.15);">
 
           <!-- HEADER -->
           <tr>
@@ -51,7 +51,7 @@ export function ticketCreatedTemplate(ticket: Ticket): {
               </p>
 
               <!-- TICKET INFO CARD -->
-              <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:24px;margin-bottom:24px;">
+              <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:24px;margin-bottom:24px;">
                 <p style="margin:0 0 16px;font-size:12px;color:#00e5a0;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Detalles del Ticket</p>
 
                 <table width="100%" cellpadding="0" cellspacing="0">
@@ -80,7 +80,7 @@ export function ticketCreatedTemplate(ticket: Ticket): {
                       <table width="100%"><tr>
                         <td width="50%">
                           <span style="font-size:12px;color:#64748b;display:block;">Categoría</span>
-                          <span style="font-size:13px;color:#f8fafc;">${ticket.category}</span>
+                          <span style="font-size:13px;color:#f8fafc;">${CATEGORY_LABELS[ticket.category] || ticket.category}</span>
                         </td>
                         <td width="50%">
                           <span style="font-size:12px;color:#64748b;display:block;">Fecha</span>
@@ -107,8 +107,8 @@ export function ticketCreatedTemplate(ticket: Ticket): {
 
           <!-- FOOTER -->
           <tr>
-            <td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0d0d1a;">
-              <p style="margin:0;font-size:12px;color:#334155;text-align:center;">
+            <td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0e1d38;">
+              <p style="margin:0;font-size:12px;color:#44597c;text-align:center;">
                 Este es un mensaje automático del sistema de soporte de <strong style="color:#00e5a0;">PROTEGER SALUD</strong>.<br/>
                 Por favor no respondas directamente a este correo.
               </p>
@@ -152,11 +152,11 @@ export function ticketStatusChangedTemplate(
 <head>
   <meta charset="UTF-8" />
 </head>
-<body style="margin:0;padding:0;background-color:#0a0a14;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a14;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#0a1830;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a1830;padding:40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background:#12121f;border-radius:16px;overflow:hidden;border:1px solid rgba(0,229,160,0.15);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#13233f;border-radius:16px;overflow:hidden;border:1px solid rgba(0,229,160,0.15);">
 
           <tr>
             <td style="background:linear-gradient(135deg,#00e5a0,#2563eb);padding:32px 40px;">
@@ -173,7 +173,7 @@ export function ticketStatusChangedTemplate(
               </p>
 
               ${techName ? `
-              <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+              <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
                 <div style="width:36px;height:36px;border-radius:50%;background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                   <span style="font-size:14px;font-weight:700;color:#60a5fa;">${techName.charAt(0).toUpperCase()}</span>
                 </div>
@@ -183,12 +183,12 @@ export function ticketStatusChangedTemplate(
                 </div>
               </div>` : ""}
 
-              <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:20px;margin-bottom:24px;text-align:center;">
+              <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:20px;margin-bottom:24px;text-align:center;">
                 <p style="margin:0 0 12px;font-size:12px;color:#64748b;">NUEVO ESTADO</p>
                 <span style="font-size:22px;font-weight:700;color:${statusColor};">● ${statusLabel}</span>
               </div>
 
-              <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:20px;">
+              <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:20px;">
                 <p style="margin:0 0 12px;font-size:12px;color:#00e5a0;text-transform:uppercase;letter-spacing:1px;">Ticket</p>
                 <p style="margin:0 0 4px;font-size:14px;color:#f1f5f9;font-weight:600;">${ticket.title}</p>
                 <p style="margin:0;font-size:12px;color:#475569;">Actualizado: ${formatDate(ticket.updated_at)}</p>
@@ -205,8 +205,8 @@ export function ticketStatusChangedTemplate(
           </tr>
 
           <tr>
-            <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0d0d1a;">
-              <p style="margin:0;font-size:12px;color:#334155;text-align:center;">
+            <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0e1d38;">
+              <p style="margin:0;font-size:12px;color:#44597c;text-align:center;">
                 Mensaje automático · <strong style="color:#00e5a0;">PROTEGER SALUD</strong> · Soporte Técnico
               </p>
             </td>
@@ -253,11 +253,11 @@ export function ticketAssignedToTechTemplate(ticket: Ticket): {
 <head>
   <meta charset="UTF-8" />
 </head>
-<body style="margin:0;padding:0;background-color:#0a0a14;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a14;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#0a1830;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a1830;padding:40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background:#12121f;border-radius:16px;overflow:hidden;border:1px solid rgba(37,99,235,0.2);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#13233f;border-radius:16px;overflow:hidden;border:1px solid rgba(37,99,235,0.2);">
 
           <tr>
             <td style="background:linear-gradient(135deg,#2563eb,#8b5cf6);padding:32px 40px;">
@@ -286,7 +286,7 @@ export function ticketAssignedToTechTemplate(ticket: Ticket): {
               </p>
 
               <!-- TICKET INFO -->
-              <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:24px;margin-bottom:20px;">
+              <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:24px;margin-bottom:20px;">
                 <p style="margin:0 0 16px;font-size:11px;color:#60a5fa;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Detalles del ticket</p>
 
                 <p style="margin:0 0 4px;font-size:16px;color:#f1f5f9;font-weight:700;">${ticket.title}</p>
@@ -320,8 +320,8 @@ export function ticketAssignedToTechTemplate(ticket: Ticket): {
           </tr>
 
           <tr>
-            <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0d0d1a;">
-              <p style="margin:0;font-size:12px;color:#334155;text-align:center;">
+            <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0e1d38;">
+              <p style="margin:0;font-size:12px;color:#44597c;text-align:center;">
                 Mensaje automático · <strong style="color:#60a5fa;">PROTEGER SALUD</strong> · Soporte Técnico
               </p>
             </td>
@@ -364,11 +364,11 @@ export function ticketPriorityChangedTemplate(
 <head>
   <meta charset="UTF-8" />
 </head>
-<body style="margin:0;padding:0;background-color:#0a0a14;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a14;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#0a1830;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a1830;padding:40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background:#12121f;border-radius:16px;overflow:hidden;border:1px solid rgba(0,229,160,0.15);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#13233f;border-radius:16px;overflow:hidden;border:1px solid rgba(0,229,160,0.15);">
 
           <tr>
             <td style="background:linear-gradient(135deg,#00e5a0,#2563eb);padding:32px 40px;">
@@ -398,7 +398,7 @@ export function ticketPriorityChangedTemplate(
 
               ${techName ? `
               <!-- TECH CARD -->
-              <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(37,99,235,0.2);padding:20px;margin-bottom:20px;">
+              <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(37,99,235,0.2);padding:20px;margin-bottom:20px;">
                 <p style="margin:0 0 14px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Técnico asignado</p>
                 <table cellpadding="0" cellspacing="0">
                   <tr>
@@ -414,12 +414,12 @@ export function ticketPriorityChangedTemplate(
                   </tr>
                 </table>
               </div>` : `
-              <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;margin-bottom:20px;">
+              <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;margin-bottom:20px;">
                 <p style="margin:0;font-size:13px;color:#94a3b8;">El equipo técnico evaluó tu solicitud y actualizó su prioridad.</p>
               </div>`}
 
               <!-- PRIORITY CHANGE -->
-              <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:20px;margin-bottom:20px;">
+              <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:20px;margin-bottom:20px;">
                 <p style="margin:0 0 16px;font-size:11px;color:#00e5a0;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Prioridad actualizada</p>
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
@@ -439,7 +439,7 @@ export function ticketPriorityChangedTemplate(
               </div>
 
               <!-- TICKET INFO -->
-              <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;margin-bottom:20px;">
+              <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;margin-bottom:20px;">
                 <p style="margin:0 0 4px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Tu solicitud</p>
                 <p style="margin:0;font-size:14px;color:#f1f5f9;font-weight:600;">${ticket.title}</p>
               </div>
@@ -455,8 +455,8 @@ export function ticketPriorityChangedTemplate(
           </tr>
 
           <tr>
-            <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0d0d1a;">
-              <p style="margin:0;font-size:12px;color:#334155;text-align:center;">
+            <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0e1d38;">
+              <p style="margin:0;font-size:12px;color:#44597c;text-align:center;">
                 Mensaje automático · <strong style="color:#00e5a0;">PROTEGER SALUD</strong> · Soporte Técnico
               </p>
             </td>
@@ -484,10 +484,10 @@ export function newCommentTemplate(
 <!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8" /></head>
-<body style="margin:0;padding:0;background-color:#0a0a14;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a14;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#0a1830;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a1830;padding:40px 20px;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background:#12121f;border-radius:16px;overflow:hidden;border:1px solid rgba(0,229,160,0.15);">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#13233f;border-radius:16px;overflow:hidden;border:1px solid rgba(0,229,160,0.15);">
         <tr>
           <td style="background:linear-gradient(135deg,#00e5a0,#2563eb);padding:32px 40px;">
             <table width="100%" cellpadding="0" cellspacing="0"><tr>
@@ -507,23 +507,138 @@ export function newCommentTemplate(
         <tr>
           <td style="padding:36px 40px;">
             <p style="margin:0 0 20px;font-size:15px;color:#94a3b8;">Hola <strong style="color:#f1f5f9;">${ticket.requester_name}</strong>, el equipo técnico dejó un comentario en tu ticket.</p>
-            <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(0,229,160,0.12);padding:20px;margin-bottom:20px;">
+            <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(0,229,160,0.12);padding:20px;margin-bottom:20px;">
               <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#00e5a0;">${authorName}</p>
               <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.7;white-space:pre-wrap;">${commentContent}</p>
             </div>
-            <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;">
+            <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;">
               <p style="margin:0 0 4px;font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:1px;">Tu ticket</p>
               <p style="margin:0;font-size:14px;color:#f1f5f9;font-weight:600;">${ticket.title}</p>
             </div>
           </td>
         </tr>
         <tr>
-          <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0d0d1a;">
-            <p style="margin:0;font-size:12px;color:#334155;text-align:center;">Mensaje automático · <strong style="color:#00e5a0;">PROTEGER SALUD</strong> · Soporte Técnico</p>
+          <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0e1d38;">
+            <p style="margin:0;font-size:12px;color:#44597c;text-align:center;">Mensaje automático · <strong style="color:#00e5a0;">PROTEGER SALUD</strong> · Soporte Técnico</p>
           </td>
         </tr>
       </table>
     </td></tr>
+  </table>
+</body>
+</html>
+  `;
+
+  return { subject, html };
+}
+
+export function newTicketForTeamTemplate(ticket: Ticket): {
+  subject: string;
+  html: string;
+} {
+  const sectorLabel = SECTOR_LABELS[ticket.sector] || ticket.sector;
+  const subject = `[${ticket.ticket_number}] Nuevo ticket de ${ticket.area} — ${sectorLabel}`;
+
+  const priorityColor =
+    ticket.priority === "urgent"
+      ? "#ef4444"
+      : ticket.priority === "high"
+      ? "#f59e0b"
+      : ticket.priority === "medium"
+      ? "#3b82f6"
+      : "#64748b";
+
+  const priorityLabel =
+    ticket.priority === "urgent"
+      ? "🔴 Urgente"
+      : ticket.priority === "high"
+      ? "🟠 Alta"
+      : ticket.priority === "medium"
+      ? "🔵 Media"
+      : "⚪ Baja";
+
+  const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+</head>
+<body style="margin:0;padding:0;background-color:#0a1830;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a1830;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#13233f;border-radius:16px;overflow:hidden;border:1px solid rgba(0,229,160,0.2);">
+
+          <tr>
+            <td style="background:linear-gradient(135deg,#00e5a0,#2563eb);padding:32px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:2px;font-weight:600;">PROTEGER SALUD · Equipo de ${sectorLabel}</p>
+                    <h1 style="margin:8px 0 0;font-size:22px;color:#fff;font-weight:700;">Nuevo ticket para tu equipo</h1>
+                  </td>
+                  <td align="right">
+                    <div style="background:rgba(255,255,255,0.15);border-radius:10px;padding:10px 16px;">
+                      <p style="margin:0;font-size:10px;color:rgba(255,255,255,0.7);">TICKET N°</p>
+                      <p style="margin:4px 0 0;font-size:16px;color:#fff;font-weight:800;font-family:monospace;">${ticket.ticket_number}</p>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:36px 40px;">
+              <p style="margin:0 0 24px;font-size:15px;color:#94a3b8;line-height:1.6;">
+                Entró un ticket nuevo para el equipo de <strong style="color:#f1f5f9;">${sectorLabel}</strong>
+                desde <strong style="color:#00e5a0;">${ticket.area}</strong>.
+              </p>
+
+              <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:24px;margin-bottom:20px;">
+                <p style="margin:0 0 16px;font-size:11px;color:#00e5a0;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Detalles del ticket</p>
+
+                <p style="margin:0 0 4px;font-size:16px;color:#f1f5f9;font-weight:700;">${ticket.title}</p>
+                <p style="margin:0 0 16px;font-size:13px;color:#64748b;">${ticket.requester_name} · ${ticket.area}</p>
+
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+                  <tr>
+                    <td width="50%" style="padding-bottom:8px;">
+                      <p style="margin:0 0 3px;font-size:10px;color:#475569;text-transform:uppercase;">Prioridad</p>
+                      <p style="margin:0;font-size:13px;font-weight:600;color:${priorityColor};">${priorityLabel}</p>
+                    </td>
+                    <td width="50%" style="padding-bottom:8px;">
+                      <p style="margin:0 0 3px;font-size:10px;color:#475569;text-transform:uppercase;">Solicitante</p>
+                      <p style="margin:0;font-size:13px;color:#94a3b8;">${ticket.requester_email}</p>
+                    </td>
+                  </tr>
+                </table>
+
+                <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px;">
+                  <p style="margin:0 0 6px;font-size:10px;color:#475569;text-transform:uppercase;">Descripción</p>
+                  <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">${ticket.description.substring(0, 280)}${ticket.description.length > 280 ? "..." : ""}</p>
+                </div>
+              </div>
+
+              <div style="padding:14px 16px;background:rgba(0,229,160,0.05);border-left:3px solid #00e5a0;border-radius:4px;">
+                <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">
+                  Ingresá al panel de administración para tomarlo o asignarlo.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);background:#0e1d38;">
+              <p style="margin:0;font-size:12px;color:#44597c;text-align:center;">
+                Mensaje automático · <strong style="color:#00e5a0;">PROTEGER SALUD</strong> · Sistema de Tickets
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
   </table>
 </body>
 </html>

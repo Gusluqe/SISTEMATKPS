@@ -2,14 +2,14 @@ export default function DashboardLoading() {
   return (
     <div className="flex-1 p-6 space-y-6 animate-pulse">
       {/* Header skeleton */}
-      <div className="h-16 bg-[#0d0d1a]/80 border-b border-white/[0.06] -mx-6 -mt-6 mb-6 px-6 flex items-center gap-3">
+      <div className="h-16 bg-[#0e1d38]/80 border-b border-white/[0.06] -mx-6 -mt-6 mb-6 px-6 flex items-center gap-3">
         <div className="h-5 w-32 rounded-lg skeleton" />
       </div>
 
       {/* Metric cards skeleton */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5 space-y-4">
+          <div key={i} className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="h-3 w-24 rounded skeleton" />
               <div className="w-9 h-9 rounded-xl skeleton" />
@@ -23,7 +23,7 @@ export default function DashboardLoading() {
       {/* Charts skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5">
+          <div key={i} className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5">
             <div className="h-3 w-36 rounded skeleton mb-5" />
             <div className="h-[220px] rounded-xl skeleton" />
           </div>
@@ -31,7 +31,7 @@ export default function DashboardLoading() {
       </div>
 
       {/* Recent tickets skeleton */}
-      <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl">
+      <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl">
         <div className="px-5 py-4 border-b border-white/[0.06]">
           <div className="h-4 w-40 rounded skeleton" />
         </div>

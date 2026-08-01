@@ -1,7 +1,8 @@
 import { Header } from "@/components/layout/Header";
 import { TicketDetail } from "@/components/tickets/TicketDetail";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { getAccess } from "@/lib/access";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Ticket, Technician } from "@/types";
@@ -20,6 +21,8 @@ async function getTicket(id: string): Promise<Ticket | null> {
       comments:ticket_comments(*),
       history:ticket_history(*)
     `)
+    .order("created_at", { ascending: true, referencedTable: "ticket_comments" })
+    .order("created_at", { ascending: true, referencedTable: "ticket_history" })
     .eq("id", id)
     .single();
 
@@ -51,6 +54,12 @@ export default async function TicketDetailPage({ params }: PageProps) {
   ]);
 
   if (!ticket) notFound();
+
+  // Un técnico no puede abrir tickets de sectores que no tiene habilitados
+  const access = await getAccess();
+  if (access.role === "technician" && !access.sectors.includes(ticket.sector)) {
+    redirect("/admin/tickets");
+  }
 
   return (
     <>

@@ -22,6 +22,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, email, password } = body;
+    const validSectors = Array.isArray(body.sectors)
+      ? body.sectors.filter((s: string) => ["sistemas", "ecommerce", "mantenimiento"].includes(s))
+      : [];
+    const sectors: string[] = validSectors.length > 0 ? validSectors : ["sistemas"];
+    const role: "admin" | "technician" = body.role === "admin" ? "admin" : "technician";
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -45,7 +50,9 @@ export async function POST(request: NextRequest) {
       email,
       password,
       email_confirm: true,
-      user_metadata: { name, role: "technician" },
+      user_metadata: { name },
+      // El rol va en app_metadata: el usuario no puede editárselo a sí mismo
+      app_metadata: { role },
     });
 
     if (authError) {
@@ -67,7 +74,7 @@ export async function POST(request: NextRequest) {
     // Insert technician record linked to auth user
     const { data, error } = await supabase
       .from("technicians")
-      .insert({ name, email, active: true, auth_user_id: authUserId })
+      .insert({ name, email, active: true, sectors, role, auth_user_id: authUserId })
       .select()
       .single();
 

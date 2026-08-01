@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Ticket, Technician, STATUS_LABELS, CATEGORY_LABELS, PRIORITY_LABELS } from "@/types";
+import { Ticket, Technician, STATUS_LABELS, CATEGORY_LABELS, PRIORITY_LABELS, SECTOR_LABELS } from "@/types";
 import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatRelative } from "@/lib/utils";
@@ -127,7 +127,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
       {/* Main content */}
       <div className="space-y-5">
         {/* Header card */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5">
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="font-mono text-sm text-[#00e5a0] font-bold bg-[#00e5a0]/10 px-3 py-1 rounded-lg border border-[#00e5a0]/20">
               {ticket.ticket_number}
@@ -153,7 +153,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
         </div>
 
         {/* Description */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5">
           <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
             Descripción
           </p>
@@ -163,13 +163,13 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
         </div>
 
         {/* Attachments */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider flex items-center gap-2">
               <Paperclip className="w-3.5 h-3.5" />
               Adjuntos ({ticket.attachments?.length || 0})
             </p>
-            <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a1a2e] border border-white/10 text-xs text-[#64748b] hover:text-[#94a3b8] hover:border-white/20 cursor-pointer transition-colors">
+            <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1c3054] border border-white/10 text-xs text-[#64748b] hover:text-[#94a3b8] hover:border-white/20 cursor-pointer transition-colors">
               {uploadingFile ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
@@ -197,7 +197,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 bg-[#1a1a2e] flex items-center justify-center hover:border-[#00e5a0]/30 transition-colors"
+                    className="group relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 bg-[#1c3054] flex items-center justify-center hover:border-[#00e5a0]/30 transition-colors"
                   >
                     {isPdf ? (
                       <div className="flex flex-col items-center gap-1 p-2">
@@ -218,12 +218,12 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
               })}
             </div>
           ) : (
-            <p className="text-xs text-[#334155]">Sin adjuntos.</p>
+            <p className="text-xs text-[#44597c]">Sin adjuntos.</p>
           )}
         </div>
 
         {/* Tabs: Comments / History */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl overflow-hidden">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl overflow-hidden">
           <div className="flex border-b border-white/[0.06]">
             {(["comments", "history"] as const).map((tab) => (
               <button
@@ -254,7 +254,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
             {activeTab === "comments" && (
               <div className="space-y-4">
                 {(ticket.comments || []).length === 0 ? (
-                  <p className="text-sm text-[#334155] text-center py-4">
+                  <p className="text-sm text-[#44597c] text-center py-4">
                     Sin comentarios aún.
                   </p>
                 ) : (
@@ -264,7 +264,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
                       className={`rounded-xl p-4 border ${
                         c.is_internal
                           ? "bg-amber-500/5 border-amber-500/15"
-                          : "bg-[#1a1a2e] border-white/[0.06]"
+                          : "bg-[#1c3054] border-white/[0.06]"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -278,7 +278,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
                             </span>
                           )}
                         </div>
-                        <span className="text-[11px] text-[#334155]">
+                        <span className="text-[11px] text-[#44597c]">
                           {formatRelative(c.created_at)}
                         </span>
                       </div>
@@ -296,7 +296,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
                     onChange={(e) => setComment(e.target.value)}
                     placeholder="Agregar comentario..."
                     rows={3}
-                    className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#334155] resize-none focus:outline-none focus:border-[#00e5a0]/40 mb-3"
+                    className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#44597c] resize-none focus:outline-none focus:border-[#00e5a0]/40 mb-3"
                   />
                   <div className="flex items-center justify-between">
                     <label className="flex items-center gap-2 text-xs text-[#64748b] cursor-pointer">
@@ -329,7 +329,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
             {activeTab === "history" && (
               <div className="space-y-2">
                 {(ticket.history || []).length === 0 ? (
-                  <p className="text-sm text-[#334155] text-center py-4">
+                  <p className="text-sm text-[#44597c] text-center py-4">
                     Sin historial registrado.
                   </p>
                 ) : (
@@ -351,7 +351,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
                             <> a <span className="text-[#00e5a0]">{h.new_value}</span></>
                           )}
                         </p>
-                        <p className="text-[11px] text-[#334155] mt-0.5">
+                        <p className="text-[11px] text-[#44597c] mt-0.5">
                           {formatRelative(h.created_at)}
                         </p>
                       </div>
@@ -367,7 +367,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
       {/* Sidebar — management */}
       <div className="space-y-4">
         {/* Quick actions */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-4">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-4">
           <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
             Acciones Rápidas
           </p>
@@ -411,7 +411,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
         </div>
 
         {/* Status */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-4">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-4">
           <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
             Estado
           </p>
@@ -419,7 +419,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
             value={ticket.status}
             onChange={(e) => update({ status: e.target.value })}
             disabled={isPending}
-            className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#f8fafc] focus:outline-none focus:border-[#00e5a0]/40"
+            className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#f8fafc] focus:outline-none focus:border-[#00e5a0]/40"
           >
             {Object.entries(STATUS_LABELS).map(([v, l]) => (
               <option key={v} value={v}>{l}</option>
@@ -428,7 +428,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
         </div>
 
         {/* Priority */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-4">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-4">
           <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
             Prioridad
           </p>
@@ -436,7 +436,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
             value={ticket.priority}
             onChange={(e) => update({ priority: e.target.value })}
             disabled={isPending}
-            className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#f8fafc] focus:outline-none focus:border-[#00e5a0]/40"
+            className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#f8fafc] focus:outline-none focus:border-[#00e5a0]/40"
           >
             {Object.entries(PRIORITY_LABELS).map(([v, l]) => (
               <option key={v} value={v}>{l}</option>
@@ -444,8 +444,28 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
           </select>
         </div>
 
+        {/* Sector — define qué equipo lo atiende */}
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-4">
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
+            Sector
+          </p>
+          <select
+            value={ticket.sector}
+            onChange={(e) => update({ sector: e.target.value })}
+            disabled={isPending}
+            className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#f8fafc] focus:outline-none focus:border-[#00e5a0]/40"
+          >
+            {Object.entries(SECTOR_LABELS).map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+          <p className="text-[11px] text-[#44597c] mt-2">
+            Al cambiar el sector se notifica por email al equipo nuevo.
+          </p>
+        </div>
+
         {/* Category */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-4">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-4">
           <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
             Categoría
           </p>
@@ -453,7 +473,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
             value={ticket.category}
             onChange={(e) => update({ category: e.target.value })}
             disabled={isPending}
-            className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#f8fafc] focus:outline-none focus:border-[#00e5a0]/40"
+            className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#f8fafc] focus:outline-none focus:border-[#00e5a0]/40"
           >
             {Object.entries(CATEGORY_LABELS).map(([v, l]) => (
               <option key={v} value={v}>{l}</option>
@@ -462,7 +482,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
         </div>
 
         {/* Technician */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-4">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-4">
           <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
             Técnico Asignado
           </p>
@@ -472,7 +492,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
               update({ technician_id: e.target.value || null })
             }
             disabled={isPending}
-            className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#f8fafc] focus:outline-none focus:border-[#00e5a0]/40"
+            className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#f8fafc] focus:outline-none focus:border-[#00e5a0]/40"
           >
             <option value="">Sin asignar</option>
             {technicians.map((tech) => (
@@ -484,43 +504,43 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
         </div>
 
         {/* Requester info */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-4">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-4">
           <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
             Solicitante
           </p>
           <div className="space-y-2">
             <div>
-              <p className="text-[10px] text-[#334155]">Nombre</p>
+              <p className="text-[10px] text-[#44597c]">Nombre</p>
               <p className="text-sm text-[#e2e8f0]">{ticket.requester_name}</p>
             </div>
             <div>
-              <p className="text-[10px] text-[#334155]">Email</p>
+              <p className="text-[10px] text-[#44597c]">Email</p>
               <p className="text-sm text-[#94a3b8]">{ticket.requester_email}</p>
             </div>
             <div>
-              <p className="text-[10px] text-[#334155]">Área</p>
+              <p className="text-[10px] text-[#44597c]">Sucursal</p>
               <p className="text-sm text-[#94a3b8]">{ticket.area}</p>
             </div>
           </div>
         </div>
 
         {/* Dates */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-4">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-4">
           <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
             Fechas
           </p>
           <div className="space-y-2">
             <div>
-              <p className="text-[10px] text-[#334155]">Creación</p>
+              <p className="text-[10px] text-[#44597c]">Creación</p>
               <p className="text-xs text-[#94a3b8]">{formatDate(ticket.created_at)}</p>
             </div>
             <div>
-              <p className="text-[10px] text-[#334155]">Última actualización</p>
+              <p className="text-[10px] text-[#44597c]">Última actualización</p>
               <p className="text-xs text-[#94a3b8]">{formatDate(ticket.updated_at)}</p>
             </div>
             {ticket.resolved_at && (
               <div>
-                <p className="text-[10px] text-[#334155]">Resolución</p>
+                <p className="text-[10px] text-[#44597c]">Resolución</p>
                 <p className="text-xs text-[#00e5a0]">{formatDate(ticket.resolved_at)}</p>
               </div>
             )}

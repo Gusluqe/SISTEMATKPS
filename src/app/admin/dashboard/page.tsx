@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
-  TrendingUp,
   Users,
 } from "lucide-react";
 import { formatRelative } from "@/lib/utils";
@@ -132,7 +131,7 @@ export default async function DashboardPage() {
 
         {/* Technician performance */}
         {techStats.length > 0 && (
-          <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl">
+          <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl">
             <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center gap-2">
               <Users className="w-4 h-4 text-[#475569]" />
               <p className="text-sm font-semibold text-[#e2e8f0]">Rendimiento por técnico</p>
@@ -150,7 +149,7 @@ export default async function DashboardPage() {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-lg font-bold text-[#00e5a0]">{tech.rate}%</p>
-                      <p className="text-[10px] text-[#334155]">eficacia</p>
+                      <p className="text-[10px] text-[#44597c]">eficacia</p>
                     </div>
                   </div>
 
@@ -161,7 +160,7 @@ export default async function DashboardPage() {
                       { label: "Resueltos", value: tech.resolved, color: "text-[#00e5a0]" },
                       { label: "Tiempo prom.", value: tech.avg_hours !== null ? (tech.avg_hours < 1 ? `${Math.round(tech.avg_hours * 60)}m` : `${tech.avg_hours}h`) : "—", color: "text-[#94a3b8]" },
                     ].map((s) => (
-                      <div key={s.label} className="bg-[#1a1a2e] rounded-xl px-2 py-2 text-center">
+                      <div key={s.label} className="bg-[#1c3054] rounded-xl px-2 py-2 text-center">
                         <p className={`text-sm font-bold ${s.color}`}>{s.value}</p>
                         <p className="text-[10px] text-[#475569] mt-0.5">{s.label}</p>
                       </div>
@@ -171,7 +170,7 @@ export default async function DashboardPage() {
                   {/* Efficacy bar */}
                   {tech.total > 0 && (
                     <div>
-                      <div className="h-1.5 bg-[#1a1a2e] rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-[#1c3054] rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-500"
                           style={{
@@ -184,7 +183,7 @@ export default async function DashboardPage() {
                   )}
 
                   {tech.total === 0 && (
-                    <p className="text-xs text-[#334155] text-center py-1">Sin tickets asignados aún</p>
+                    <p className="text-xs text-[#44597c] text-center py-1">Sin tickets asignados aún</p>
                   )}
                 </div>
               ))}
@@ -193,7 +192,7 @@ export default async function DashboardPage() {
         )}
 
         {/* Recent tickets */}
-        <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl">
+        <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl">
           <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between">
             <p className="text-sm font-semibold text-[#e2e8f0]">Tickets recientes</p>
             <Link
@@ -206,7 +205,7 @@ export default async function DashboardPage() {
           <div className="divide-y divide-white/[0.04]">
             {metrics.recent_tickets.length === 0 ? (
               <div className="px-5 py-10 text-center">
-                <p className="text-sm text-[#334155]">No hay tickets todavía.</p>
+                <p className="text-sm text-[#44597c]">No hay tickets todavía.</p>
                 <p className="text-xs text-[#1e293b] mt-1">
                   Los tickets creados aparecerán aquí.
                 </p>
@@ -231,7 +230,7 @@ export default async function DashboardPage() {
                       {ticket.requester_name} · {ticket.area}
                     </p>
                   </div>
-                  <p className="text-xs text-[#334155] whitespace-nowrap flex-shrink-0">
+                  <p className="text-xs text-[#44597c] whitespace-nowrap flex-shrink-0">
                     {formatRelative(ticket.created_at)}
                   </p>
                 </Link>

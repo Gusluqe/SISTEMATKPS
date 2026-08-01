@@ -5,9 +5,9 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#050509]">
+    <div className="min-h-screen bg-[#081428]">
       {/* Top bar */}
-      <div className="border-b border-white/[0.06] bg-[#0d0d1a]/90 backdrop-blur-xl sticky top-0 z-10">
+      <div className="border-b border-white/[0.06] bg-[#0e1d38]/90 backdrop-blur-xl sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image
@@ -83,7 +83,7 @@ export default function Home() {
               ].map((f, i) => (
                 <div
                   key={f.label}
-                  className={`flex items-start gap-4 px-5 py-4 bg-[#12121f] ${i < 2 ? "border-b border-white/[0.06]" : ""}`}
+                  className={`flex items-start gap-4 px-5 py-4 bg-[#13233f] ${i < 2 ? "border-b border-white/[0.06]" : ""}`}
                 >
                   <div className={`w-8 h-8 rounded-lg ${f.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
                     <f.icon className={`w-4 h-4 ${f.accent}`} />
@@ -125,7 +125,7 @@ export default function Home() {
           </div>
 
           {/* Right — Form */}
-          <div className="bg-[#0d0d1a] border border-white/[0.09] rounded-2xl p-5 sm:p-6 animate-fade-in ring-1 ring-inset ring-white/[0.04]">
+          <div className="bg-[#0e1d38] border border-white/[0.09] rounded-2xl p-5 sm:p-6 animate-fade-in ring-1 ring-inset ring-white/[0.04]">
             <div className="mb-5 pb-4 border-b border-white/[0.06]">
               <h2 className="text-base font-bold text-[#f8fafc] mb-1">
                 Nuevo ticket de soporte

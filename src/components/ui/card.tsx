@@ -15,10 +15,10 @@ export function Card({
   ...props
 }: CardProps) {
   const variants = {
-    default: "bg-[#12121f] border border-white/[0.07]",
-    elevated: "bg-[#1a1a2e] border border-white/[0.09]",
+    default: "bg-[#13233f] border border-white/[0.07]",
+    elevated: "bg-[#1c3054] border border-white/[0.09]",
     gradient:
-      "bg-gradient-to-br from-[#12121f] to-[#0d1a26] border border-white/[0.07]",
+      "bg-gradient-to-br from-[#13233f] to-[#0d1a26] border border-white/[0.07]",
   };
 
   const glows = {

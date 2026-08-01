@@ -5,7 +5,7 @@ import { InputHTMLAttributes, TextareaHTMLAttributes, useId, forwardRef } from "
 import { ChevronDown } from "lucide-react";
 
 const inputBase =
-  "w-full bg-[#1a1a2e] border rounded-xl text-sm text-[#f8fafc] placeholder:text-[#475569] transition-all duration-200 focus:outline-none focus:ring-1";
+  "w-full bg-[#1c3054] border rounded-xl text-sm text-[#f8fafc] placeholder:text-[#475569] transition-all duration-200 focus:outline-none focus:ring-1";
 
 const inputNormal = "border-white/10 focus:border-[#00e5a0]/50 focus:ring-[#00e5a0]/20";
 const inputError = "border-red-500/40 focus:border-red-500/60 focus:ring-red-500/20";

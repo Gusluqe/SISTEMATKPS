@@ -36,24 +36,38 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // app_metadata solo lo puede escribir el service_role; user_metadata queda
+  // como fallback para usuarios viejos
+  const role = (user?.app_metadata?.role ?? user?.user_metadata?.role) as
+    | string
+    | undefined;
+
+  if (pathname.startsWith("/api")) {
+    // Únicos endpoints públicos: crear ticket y subir adjunto (formulario)
+    const isPublic =
+      request.method === "POST" &&
+      (pathname === "/api/tickets" || pathname === "/api/attachments");
+
+    if (!isPublic && !user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+    return response;
+  }
+
   if (!user && pathname !== "/admin/login") {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
   if (user && pathname === "/admin/login") {
-    const role = user.user_metadata?.role as string | undefined;
     const dest = role === "technician" ? "/admin/tickets" : "/admin/dashboard";
     return NextResponse.redirect(new URL(dest, request.url));
   }
 
   // Technicians can only access /admin/tickets
-  if (user) {
-    const role = user.user_metadata?.role as string | undefined;
-    if (role === "technician") {
-      const allowed = pathname.startsWith("/admin/tickets");
-      if (!allowed) {
-        return NextResponse.redirect(new URL("/admin/tickets", request.url));
-      }
+  if (user && role === "technician") {
+    const allowed = pathname.startsWith("/admin/tickets");
+    if (!allowed) {
+      return NextResponse.redirect(new URL("/admin/tickets", request.url));
     }
   }
 
@@ -61,5 +75,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/:path*"],
 };

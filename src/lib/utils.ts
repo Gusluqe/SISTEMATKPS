@@ -49,6 +49,8 @@ export const CATEGORY_ICONS: Record<TicketCategory, string> = {
   systems: "🖥️",
   users: "👤",
   ecommerce: "🛒",
+  maintenance: "🔧",
+  woxi: "📅",
   other: "📋",
 };
 

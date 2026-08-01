@@ -8,7 +8,9 @@ import {
   TicketStatus,
   TicketPriority,
   TicketCategory,
+  TicketSector,
   CATEGORY_LABELS,
+  SECTOR_LABELS,
 } from "@/types";
 import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
 import { formatDate, formatRelative } from "@/lib/utils";
@@ -31,11 +33,42 @@ const statusOrder: Record<TicketStatus, number> = {
   open: 5, in_progress: 4, waiting: 3, resolved: 2, closed: 1,
 };
 
+function SortBtn({
+  field,
+  label,
+  sort,
+  onToggle,
+}: {
+  field: SortField;
+  label: string;
+  sort: { field: SortField; dir: SortDir };
+  onToggle: (field: SortField) => void;
+}) {
+  return (
+    <button
+      onClick={() => onToggle(field)}
+      className="flex items-center gap-1.5 text-xs font-semibold text-[#64748b] hover:text-[#94a3b8] transition-colors group"
+    >
+      {label}
+      <ArrowUpDown
+        className={cn(
+          "w-3 h-3 transition-colors",
+          sort.field === field
+            ? "text-[#00e5a0]"
+            : "text-[#44597c] group-hover:text-[#475569]"
+        )}
+      />
+    </button>
+  );
+}
+
 export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<TicketStatus | "all">("all");
   const [filterPriority, setFilterPriority] = useState<TicketPriority | "all">("all");
   const [filterCategory, setFilterCategory] = useState<TicketCategory | "all">("all");
+  const [filterSector, setFilterSector] = useState<TicketSector | "all">("all");
+  const [filterSucursal, setFilterSucursal] = useState<string>("all");
   const [filterTechnician, setFilterTechnician] = useState<string>("all");
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({
     field: "created_at",
@@ -44,14 +77,20 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
   const [showFilters, setShowFilters] = useState(false);
 
   const hasActiveFilters =
-    filterStatus !== "all" || filterPriority !== "all" || filterCategory !== "all" || filterTechnician !== "all";
+    filterStatus !== "all" || filterPriority !== "all" || filterCategory !== "all" ||
+    filterSector !== "all" || filterSucursal !== "all" || filterTechnician !== "all";
 
   const clearFilters = () => {
     setFilterStatus("all");
     setFilterPriority("all");
     setFilterCategory("all");
+    setFilterSector("all");
+    setFilterSucursal("all");
     setFilterTechnician("all");
   };
+
+  // Sucursales presentes en los tickets (incluye valores viejos)
+  const sucursales = Array.from(new Set(tickets.map((t) => t.area))).sort();
 
   const filtered = tickets
     .filter((t) => {
@@ -67,13 +106,15 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
       const matchStatus = filterStatus === "all" || t.status === filterStatus;
       const matchPriority = filterPriority === "all" || t.priority === filterPriority;
       const matchCategory = filterCategory === "all" || t.category === filterCategory;
+      const matchSector = filterSector === "all" || t.sector === filterSector;
+      const matchSucursal = filterSucursal === "all" || t.area === filterSucursal;
       const matchTechnician =
         filterTechnician === "all"
           ? true
           : filterTechnician === "unassigned"
           ? !t.technician_id
           : t.technician_id === filterTechnician;
-      return matchSearch && matchStatus && matchPriority && matchCategory && matchTechnician;
+      return matchSearch && matchStatus && matchPriority && matchCategory && matchSector && matchSucursal && matchTechnician;
     })
     .sort((a, b) => {
       const dir = sort.dir === "asc" ? 1 : -1;
@@ -93,12 +134,13 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
     const STATUS_ES: Record<string, string> = { open: "Abierto", in_progress: "En Proceso", waiting: "Esperando", resolved: "Resuelto", closed: "Cerrado" };
     const PRIORITY_ES: Record<string, string> = { low: "Baja", medium: "Media", high: "Alta", urgent: "Urgente" };
 
-    const headers = ["N° Ticket", "Título", "Estado", "Prioridad", "Categoría", "Solicitante", "Email", "Área", "Técnico", "Fecha creación", "Fecha resolución", "Descripción"];
+    const headers = ["N° Ticket", "Título", "Estado", "Prioridad", "Sector", "Categoría", "Solicitante", "Email", "Sucursal", "Técnico", "Fecha creación", "Fecha resolución", "Descripción"];
     const rows = filtered.map((t) => [
       t.ticket_number,
       t.title,
       STATUS_ES[t.status] || t.status,
       PRIORITY_ES[t.priority] || t.priority,
+      SECTOR_LABELS[t.sector] || t.sector,
       CATEGORY_LABELS[t.category] || t.category,
       t.requester_name,
       t.requester_email,
@@ -126,23 +168,6 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
         : { field, dir: "desc" }
     );
 
-  const SortBtn = ({ field, label }: { field: SortField; label: string }) => (
-    <button
-      onClick={() => toggleSort(field)}
-      className="flex items-center gap-1.5 text-xs font-semibold text-[#64748b] hover:text-[#94a3b8] transition-colors group"
-    >
-      {label}
-      <ArrowUpDown
-        className={cn(
-          "w-3 h-3 transition-colors",
-          sort.field === field
-            ? "text-[#00e5a0]"
-            : "text-[#334155] group-hover:text-[#475569]"
-        )}
-      />
-    </button>
-  );
-
   return (
     <div className="space-y-3">
       {/* Search + filter toggle row */}
@@ -154,7 +179,7 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por título, N°, solicitante, email, técnico..."
             aria-label="Buscar tickets"
-            className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm text-[#f8fafc] placeholder:text-[#334155] focus:outline-none focus:border-[#00e5a0]/40 focus:ring-1 focus:ring-[#00e5a0]/20"
+            className="w-full bg-[#1c3054] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm text-[#f8fafc] placeholder:text-[#44597c] focus:outline-none focus:border-[#00e5a0]/40 focus:ring-1 focus:ring-[#00e5a0]/20"
           />
         </div>
         <button
@@ -163,22 +188,22 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
             "flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors",
             showFilters || hasActiveFilters
               ? "bg-[#00e5a0]/10 border-[#00e5a0]/25 text-[#00e5a0]"
-              : "bg-[#1a1a2e] border-white/10 text-[#64748b] hover:text-[#94a3b8]"
+              : "bg-[#1c3054] border-white/10 text-[#64748b] hover:text-[#94a3b8]"
           )}
           aria-expanded={showFilters}
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Filtros</span>
           {hasActiveFilters && (
-            <span className="w-5 h-5 rounded-full bg-[#00e5a0] text-[#050509] text-[10px] font-bold flex items-center justify-center">
-              {[filterStatus, filterPriority, filterCategory, filterTechnician].filter((f) => f !== "all").length}
+            <span className="w-5 h-5 rounded-full bg-[#00e5a0] text-[#081428] text-[10px] font-bold flex items-center justify-center">
+              {[filterStatus, filterPriority, filterCategory, filterSector, filterSucursal, filterTechnician].filter((f) => f !== "all").length}
             </span>
           )}
         </button>
         <button
           onClick={exportCSV}
           title="Exportar a Excel"
-          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 bg-[#1a1a2e] text-sm font-medium text-[#64748b] hover:text-[#94a3b8] transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 bg-[#1c3054] text-sm font-medium text-[#64748b] hover:text-[#94a3b8] transition-colors"
         >
           <Download className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Exportar</span>
@@ -187,11 +212,11 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
 
       {/* Filter row — collapsible */}
       {showFilters && (
-        <div className="flex flex-wrap gap-3 p-3 bg-[#12121f] rounded-xl border border-white/[0.07]">
+        <div className="flex flex-wrap gap-3 p-3 bg-[#13233f] rounded-xl border border-white/[0.07]">
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as TicketStatus | "all")}
-            className="bg-[#1a1a2e] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
+            className="bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
             aria-label="Filtrar por estado"
           >
             <option value="all">Todos los estados</option>
@@ -205,7 +230,7 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value as TicketPriority | "all")}
-            className="bg-[#1a1a2e] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
+            className="bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
             aria-label="Filtrar por prioridad"
           >
             <option value="all">Todas las prioridades</option>
@@ -216,9 +241,33 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
           </select>
 
           <select
+            value={filterSector}
+            onChange={(e) => setFilterSector(e.target.value as TicketSector | "all")}
+            className="bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
+            aria-label="Filtrar por sector"
+          >
+            <option value="all">Todos los sectores</option>
+            {Object.entries(SECTOR_LABELS).map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+
+          <select
+            value={filterSucursal}
+            onChange={(e) => setFilterSucursal(e.target.value)}
+            className="bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
+            aria-label="Filtrar por sucursal"
+          >
+            <option value="all">Todas las sucursales</option>
+            {sucursales.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+
+          <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value as TicketCategory | "all")}
-            className="bg-[#1a1a2e] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
+            className="bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
             aria-label="Filtrar por categoría"
           >
             <option value="all">Todas las categorías</option>
@@ -231,7 +280,7 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
             <select
               value={filterTechnician}
               onChange={(e) => setFilterTechnician(e.target.value)}
-              className="bg-[#1a1a2e] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
+              className="bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
               aria-label="Filtrar por técnico"
             >
               <option value="all">Todos los técnicos</option>
@@ -266,18 +315,18 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-[#0d0d1a]">
+              <tr className="border-b border-white/[0.06] bg-[#0e1d38]">
                 <th className="px-4 py-3 text-left">
-                  <SortBtn field="ticket_number" label="N° Ticket" />
+                  <SortBtn field="ticket_number" label="N° Ticket" sort={sort} onToggle={toggleSort} />
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[#64748b] uppercase tracking-wide">
                   Título
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <SortBtn field="status" label="Estado" />
+                  <SortBtn field="status" label="Estado" sort={sort} onToggle={toggleSort} />
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <SortBtn field="priority" label="Prioridad" />
+                  <SortBtn field="priority" label="Prioridad" sort={sort} onToggle={toggleSort} />
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[#64748b] uppercase tracking-wide">
                   Categoría
@@ -286,7 +335,7 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
                   Solicitante
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <SortBtn field="created_at" label="Fecha" />
+                  <SortBtn field="created_at" label="Fecha" sort={sort} onToggle={toggleSort} />
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[#64748b] uppercase tracking-wide">
                   Técnico
@@ -297,7 +346,7 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
             <tbody className="divide-y divide-white/[0.04]">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-[#334155] text-sm">
+                  <td colSpan={9} className="px-4 py-12 text-center text-[#44597c] text-sm">
                     No se encontraron tickets con los filtros aplicados.
                   </td>
                 </tr>
@@ -305,7 +354,7 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
                 filtered.map((ticket) => (
                   <tr
                     key={ticket.id}
-                    className="bg-[#12121f] hover:bg-[#1a1a2e] transition-colors cursor-pointer group"
+                    className="bg-[#13233f] hover:bg-[#1c3054] transition-colors cursor-pointer group"
                   >
                     <td className="px-4 py-3">
                       <Link href={`/admin/tickets/${ticket.id}`} className="block">
@@ -335,18 +384,21 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
                         <span className="text-xs text-[#64748b]">
                           {CATEGORY_LABELS[ticket.category]}
                         </span>
+                        <p className="text-[11px] text-[#44597c] mt-0.5">
+                          {SECTOR_LABELS[ticket.sector] || ticket.sector}
+                        </p>
                       </Link>
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/admin/tickets/${ticket.id}`} className="block">
                         <p className="text-xs text-[#94a3b8] font-medium">{ticket.requester_name}</p>
-                        <p className="text-[11px] text-[#334155]">{ticket.requester_email}</p>
+                        <p className="text-[11px] text-[#44597c]">{ticket.requester_email}</p>
                       </Link>
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/admin/tickets/${ticket.id}`} className="block">
                         <p className="text-xs text-[#64748b]">{formatDate(ticket.created_at)}</p>
-                        <p className="text-[11px] text-[#334155]">{formatRelative(ticket.created_at)}</p>
+                        <p className="text-[11px] text-[#44597c]">{formatRelative(ticket.created_at)}</p>
                       </Link>
                     </td>
                     <td className="px-4 py-3">
@@ -354,13 +406,13 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
                         {ticket.technician ? (
                           <span className="text-xs text-[#94a3b8]">{ticket.technician.name}</span>
                         ) : (
-                          <span className="text-xs text-[#334155] italic">Sin asignar</span>
+                          <span className="text-xs text-[#44597c] italic">Sin asignar</span>
                         )}
                       </Link>
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/admin/tickets/${ticket.id}`}>
-                        <ChevronRight className="w-4 h-4 text-[#334155] group-hover:text-[#64748b] transition-colors" />
+                        <ChevronRight className="w-4 h-4 text-[#44597c] group-hover:text-[#64748b] transition-colors" />
                       </Link>
                     </td>
                   </tr>
@@ -374,7 +426,7 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
       {/* Mobile card list */}
       <div className="md:hidden space-y-3">
         {filtered.length === 0 ? (
-          <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl px-4 py-12 text-center text-[#334155] text-sm">
+          <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl px-4 py-12 text-center text-[#44597c] text-sm">
             No se encontraron tickets con los filtros aplicados.
           </div>
         ) : (
@@ -382,7 +434,7 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
             <Link
               key={ticket.id}
               href={`/admin/tickets/${ticket.id}`}
-              className="block bg-[#12121f] border border-white/[0.07] rounded-2xl p-4 hover:border-white/[0.12] transition-colors"
+              className="block bg-[#13233f] border border-white/[0.07] rounded-2xl p-4 hover:border-white/[0.12] transition-colors"
             >
               <div className="flex items-start justify-between gap-2 mb-3">
                 <span className="font-mono text-xs text-[#00e5a0] font-semibold bg-[#00e5a0]/10 px-2 py-1 rounded-lg">
@@ -402,8 +454,8 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
                   <p className="text-[11px] text-[#475569]">{ticket.area}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-[#64748b]">{CATEGORY_LABELS[ticket.category]}</p>
-                  <p className="text-[11px] text-[#334155]">{formatRelative(ticket.created_at)}</p>
+                  <p className="text-xs text-[#64748b]">{SECTOR_LABELS[ticket.sector] || ticket.sector} · {CATEGORY_LABELS[ticket.category]}</p>
+                  <p className="text-[11px] text-[#44597c]">{formatRelative(ticket.created_at)}</p>
                 </div>
               </div>
               {ticket.technician && (

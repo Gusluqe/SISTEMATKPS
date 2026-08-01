@@ -4,16 +4,16 @@
 Tinted dark neutrals + one green accent (≤10% of surface). Blue as secondary for interactive states.
 
 ## Colors
-- Base: #050509 (near-black, blue-tinted)
-- Surface: #0d0d1a
-- Card: #12121f
-- Elevated: #1a1a2e
+- Base: #081428 (deep navy)
+- Surface: #0e1d38
+- Card: #13233f
+- Elevated: #1c3054
 - Accent green: #00e5a0 (teal-green, active states, CTAs)
 - Accent blue: #3b82f6 (info, links, secondary)
 - Text primary: #f8fafc
 - Text secondary: #94a3b8
 - Text muted: #475569
-- Text faint: #334155
+- Text faint: #44597c
 - Border subtle: rgba(255,255,255,0.07)
 - Border strong: rgba(255,255,255,0.12)
 

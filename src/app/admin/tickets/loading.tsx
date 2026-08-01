@@ -11,12 +11,12 @@ export default function TicketsLoading() {
 
       {/* Table skeleton */}
       <div className="rounded-2xl border border-white/[0.07] overflow-hidden">
-        <div className="bg-[#0d0d1a] px-4 py-3 flex gap-4">
+        <div className="bg-[#0e1d38] px-4 py-3 flex gap-4">
           {["w-20", "flex-1", "w-24", "w-20", "w-24", "w-28", "w-24", "w-20"].map((w, i) => (
             <div key={i} className={`h-3 ${w} rounded skeleton`} />
           ))}
         </div>
-        <div className="bg-[#12121f] divide-y divide-white/[0.04]">
+        <div className="bg-[#13233f] divide-y divide-white/[0.04]">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="px-4 py-3.5 flex items-center gap-4">
               <div className="h-4 w-24 rounded skeleton" />

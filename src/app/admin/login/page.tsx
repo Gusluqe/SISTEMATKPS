@@ -46,7 +46,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050509] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#081428] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-8">
@@ -66,7 +66,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-[#0d0d1a] border border-white/[0.09] rounded-2xl p-7 ring-1 ring-inset ring-white/[0.04]">
+        <div className="bg-[#0e1d38] border border-white/[0.09] rounded-2xl p-7 ring-1 ring-inset ring-white/[0.04]">
 
           {resetSent ? (
             <div className="text-center py-4">
@@ -91,7 +91,7 @@ export default function LoginPage() {
                     placeholder="tu@protegesalud.com"
                     required
                     autoComplete="email"
-                    className="w-full bg-[#12121f] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#334155] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
+                    className="w-full bg-[#13233f] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#44597c] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
                   />
                 </div>
                 {error && (
@@ -99,7 +99,7 @@ export default function LoginPage() {
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />{error}
                   </div>
                 )}
-                <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-[#00e5a0] to-[#00c87d] text-[#050509] font-bold py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity disabled:opacity-60">
+                <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-[#00e5a0] to-[#00c87d] text-[#081428] font-bold py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity disabled:opacity-60">
                   {loading ? "Enviando..." : "Enviar link"}
                 </button>
                 <button type="button" onClick={() => { setForgotMode(false); setError(null); }} className="w-full text-sm text-[#475569] hover:text-[#64748b] transition-colors">
@@ -126,7 +126,7 @@ export default function LoginPage() {
                 placeholder="tu@protegesalud.com"
                 required
                 autoComplete="email"
-                className="w-full bg-[#12121f] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#334155] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
+                className="w-full bg-[#13233f] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#44597c] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
               />
             </div>
 
@@ -142,7 +142,7 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  className="w-full bg-[#12121f] border border-white/10 rounded-xl px-3.5 py-2.5 pr-11 text-sm text-[#f8fafc] placeholder:text-[#334155] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
+                  className="w-full bg-[#13233f] border border-white/10 rounded-xl px-3.5 py-2.5 pr-11 text-sm text-[#f8fafc] placeholder:text-[#44597c] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
                 />
                 <button
                   type="button"
@@ -169,17 +169,17 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-[#00e5a0] to-[#00c87d] text-[#050509] font-bold py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2 mt-2"
+              className="w-full bg-gradient-to-r from-[#00e5a0] to-[#00c87d] text-[#081428] font-bold py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2 mt-2"
             >
               {loading && (
-                <span className="w-4 h-4 border-2 border-[#050509]/30 border-t-[#050509] rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-[#081428]/30 border-t-[#081428] rounded-full animate-spin" />
               )}
               {loading ? "Ingresando..." : "Ingresar al panel"}
             </button>
             <button
               type="button"
               onClick={() => { setForgotMode(true); setError(null); }}
-              className="w-full text-sm text-[#334155] hover:text-[#475569] transition-colors mt-1"
+              className="w-full text-sm text-[#44597c] hover:text-[#475569] transition-colors mt-1"
             >
               Olvidé mi contraseña
             </button>

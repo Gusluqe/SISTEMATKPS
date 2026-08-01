@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Technician } from "@/types";
+import { Technician, TicketSector, SECTOR_LABELS } from "@/types";
 import { UserPlus, Pencil, Power, PowerOff, X, Check, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -40,7 +40,7 @@ function Modal({
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-[#12121f] border border-white/[0.09] rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-md shadow-2xl">
+      <div className="relative bg-[#13233f] border border-white/[0.09] rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-md shadow-2xl">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-bold text-[#f8fafc]">{title}</h2>
           <button
@@ -63,8 +63,8 @@ function TechForm({
   loading,
   error,
 }: {
-  initial?: { name: string; email: string };
-  onSubmit: (name: string, email: string, password: string) => void;
+  initial?: { name: string; email: string; sectors: TicketSector[]; role: "admin" | "technician" };
+  onSubmit: (name: string, email: string, password: string, sectors: TicketSector[], role: "admin" | "technician") => void;
   onClose: () => void;
   loading: boolean;
   error: string | null;
@@ -73,13 +73,23 @@ function TechForm({
   const [email, setEmail] = useState(initial?.email || "");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [sectors, setSectors] = useState<TicketSector[]>(
+    initial?.sectors?.length ? initial.sectors : ["sistemas"]
+  );
+  const [role, setRole] = useState<"admin" | "technician">(initial?.role || "technician");
   const isEdit = !!initial;
+
+  const toggleSector = (s: TicketSector) =>
+    setSectors((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+    );
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit(name, email, password);
+        if (sectors.length === 0) return;
+        onSubmit(name, email, password, sectors, role);
       }}
       className="space-y-4"
     >
@@ -93,7 +103,7 @@ function TechForm({
           placeholder="Juan García"
           required
           minLength={2}
-          className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#334155] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
+          className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#44597c] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
         />
       </div>
       <div>
@@ -106,8 +116,49 @@ function TechForm({
           onChange={(e) => setEmail(e.target.value)}
           placeholder="juan@protegesalud.com"
           required
-          className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#334155] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
+          className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#44597c] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
         />
+      </div>
+      <div>
+        <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
+          Sectores que atiende *
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {(Object.keys(SECTOR_LABELS) as TicketSector[]).map((s) => {
+            const active = sectors.includes(s);
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => toggleSector(s)}
+                aria-pressed={active}
+                className={`px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-[#00e5a0]/10 border-[#00e5a0]/40 text-[#00e5a0]"
+                    : "bg-[#1c3054] border-white/10 text-[#64748b] hover:border-white/20"
+                }`}
+              >
+                {SECTOR_LABELS[s]}
+              </button>
+            );
+          })}
+        </div>
+        {sectors.length === 0 && (
+          <p className="text-xs text-red-400 mt-1.5">Seleccioná al menos un sector</p>
+        )}
+      </div>
+      <div>
+        <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
+          Permisos *
+        </label>
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value as "admin" | "technician")}
+          className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
+        >
+          <option value="technician">Técnico — solo los tickets de sus sectores</option>
+          <option value="admin">Admin — acceso total (dashboard, técnicos, todo)</option>
+        </select>
       </div>
       <div>
         <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
@@ -121,7 +172,7 @@ function TechForm({
             placeholder={isEdit ? "••••••••" : "Mínimo 6 caracteres"}
             required={!isEdit}
             minLength={password ? 6 : undefined}
-            className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-[#f8fafc] placeholder:text-[#334155] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
+            className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-[#f8fafc] placeholder:text-[#44597c] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
           />
           <button
             type="button"
@@ -179,14 +230,14 @@ export function TechnicianManager({
     setEditTech(tech);
   };
 
-  const addTech = async (name: string, email: string, password: string) => {
+  const addTech = async (name: string, email: string, password: string, sectors: TicketSector[], role: "admin" | "technician") => {
     setLoading(true);
     setFormError(null);
     try {
       const res = await fetch("/api/technicians", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, sectors, role }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Error al agregar");
@@ -199,12 +250,12 @@ export function TechnicianManager({
     }
   };
 
-  const updateTech = async (name: string, email: string, password: string) => {
+  const updateTech = async (name: string, email: string, password: string, sectors: TicketSector[], role: "admin" | "technician") => {
     if (!editTech) return;
     setLoading(true);
     setFormError(null);
     try {
-      const body: Record<string, string> = { name, email };
+      const body: Record<string, unknown> = { name, email, sectors, role };
       if (password) body.password = password;
       const res = await fetch(`/api/technicians/${editTech.id}`, {
         method: "PATCH",
@@ -266,10 +317,10 @@ export function TechnicianManager({
         {/* Tech grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {technicians.length === 0 && (
-            <div className="col-span-2 bg-[#12121f] border border-white/[0.07] rounded-2xl p-12 text-center">
-              <UserPlus className="w-8 h-8 text-[#334155] mx-auto mb-3" />
+            <div className="col-span-2 bg-[#13233f] border border-white/[0.07] rounded-2xl p-12 text-center">
+              <UserPlus className="w-8 h-8 text-[#44597c] mx-auto mb-3" />
               <p className="text-sm text-[#475569]">No hay técnicos registrados.</p>
-              <p className="text-xs text-[#334155] mt-1">
+              <p className="text-xs text-[#44597c] mt-1">
                 Usá el botón de arriba para agregar el primero.
               </p>
             </div>
@@ -289,7 +340,7 @@ export function TechnicianManager({
             return (
               <div
                 key={tech.id}
-                className={`bg-[#12121f] border rounded-2xl p-5 transition-all duration-200 ${
+                className={`bg-[#13233f] border rounded-2xl p-5 transition-all duration-200 ${
                   tech.active
                     ? "border-white/[0.07]"
                     : "border-white/[0.04] opacity-55"
@@ -320,6 +371,21 @@ export function TechnicianManager({
                     <p className="text-xs text-[#475569] truncate mt-0.5">
                       {tech.email}
                     </p>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {tech.role === "admin" && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-amber-400 font-semibold">
+                          Admin
+                        </span>
+                      )}
+                      {(tech.sectors || ["sistemas"]).map((s) => (
+                        <span
+                          key={s}
+                          className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#2563eb]/10 border border-[#2563eb]/20 text-[#60a5fa] font-medium"
+                        >
+                          {SECTOR_LABELS[s] || s}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -332,7 +398,7 @@ export function TechnicianManager({
                   ].map((stat) => (
                     <div
                       key={stat.label}
-                      className="bg-[#1a1a2e] rounded-xl px-2 py-2.5 text-center"
+                      className="bg-[#1c3054] rounded-xl px-2 py-2.5 text-center"
                     >
                       <p className={`text-lg font-bold leading-none ${stat.color}`}>
                         {stat.value}
@@ -353,7 +419,7 @@ export function TechnicianManager({
                         {resolveRate}%
                       </span>
                     </div>
-                    <div className="h-1.5 bg-[#1a1a2e] rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-[#1c3054] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-[#00e5a0] to-[#2563eb] rounded-full transition-all duration-500"
                         style={{ width: `${resolveRate}%` }}
@@ -364,7 +430,7 @@ export function TechnicianManager({
 
                 {/* Avg resolution */}
                 {s.avg_hours !== null && (
-                  <div className="mb-4 flex items-center justify-between px-3 py-2 bg-[#1a1a2e] rounded-xl">
+                  <div className="mb-4 flex items-center justify-between px-3 py-2 bg-[#1c3054] rounded-xl">
                     <span className="text-xs text-[#475569]">
                       Resolución promedio
                     </span>
@@ -377,8 +443,8 @@ export function TechnicianManager({
                 )}
 
                 {s.total === 0 && s.avg_hours === null && (
-                  <div className="mb-3 px-3 py-2 bg-[#1a1a2e] rounded-xl">
-                    <p className="text-[11px] text-[#334155] text-center">
+                  <div className="mb-3 px-3 py-2 bg-[#1c3054] rounded-xl">
+                    <p className="text-[11px] text-[#44597c] text-center">
                       Sin tickets asignados aún
                     </p>
                   </div>
@@ -388,7 +454,7 @@ export function TechnicianManager({
                 <div className="flex gap-2 mt-1">
                   <button
                     onClick={() => openEdit(tech)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#1a1a2e] border border-white/[0.06] text-xs font-medium text-[#94a3b8] hover:text-[#f8fafc] hover:border-white/15 transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#1c3054] border border-white/[0.06] text-xs font-medium text-[#94a3b8] hover:text-[#f8fafc] hover:border-white/15 transition-all"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     Editar
@@ -439,7 +505,7 @@ export function TechnicianManager({
       {editTech && (
         <Modal title="Editar técnico" onClose={() => setEditTech(null)}>
           <TechForm
-            initial={{ name: editTech.name, email: editTech.email }}
+            initial={{ name: editTech.name, email: editTech.email, sectors: editTech.sectors || ["sistemas"], role: editTech.role || "technician" }}
             onSubmit={updateTech}
             onClose={() => setEditTech(null)}
             loading={loading}

@@ -106,17 +106,17 @@ function SidebarContent({
         {/* User info + logout */}
         <div className="mx-1 mt-1 pt-2 border-t border-white/[0.04]">
           <div className="flex items-center gap-2.5 px-2 py-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#00e5a0] to-[#2563eb] flex items-center justify-center text-[11px] font-bold text-[#050509] flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#00e5a0] to-[#2563eb] flex items-center justify-center text-[11px] font-bold text-[#081428] flex-shrink-0">
               {userName.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-[#94a3b8] truncate">{userName}</p>
-              <p className="text-[10px] text-[#334155] truncate">{userEmail}</p>
+              <p className="text-[10px] text-[#44597c] truncate">{userEmail}</p>
             </div>
             <button
               onClick={handleLogout}
               title="Cerrar sesión"
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#334155] hover:text-red-400 hover:bg-red-500/10 transition-colors flex-shrink-0"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#44597c] hover:text-red-400 hover:bg-red-500/10 transition-colors flex-shrink-0"
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
@@ -133,7 +133,7 @@ export function Sidebar({ role, userName, userEmail }: { role: string; userName:
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-60 min-h-screen bg-[#0d0d1a] border-r border-white/[0.06] flex-col flex-shrink-0">
+      <aside className="hidden lg:flex w-60 min-h-screen bg-[#0e1d38] border-r border-white/[0.06] flex-col flex-shrink-0">
         <SidebarContent role={role} userName={userName} userEmail={userEmail} />
       </aside>
 
@@ -149,7 +149,7 @@ export function Sidebar({ role, userName, userEmail }: { role: string; userName:
       {/* Mobile drawer */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-72 bg-[#0d0d1a] border-r border-white/[0.06] z-50 flex flex-col lg:hidden transition-transform duration-300 ease-out",
+          "fixed top-0 left-0 h-full w-72 bg-[#0e1d38] border-r border-white/[0.06] z-50 flex flex-col lg:hidden transition-transform duration-300 ease-out",
           open ? "translate-x-0" : "-translate-x-full"
         )}
         aria-label="Menú de navegación"

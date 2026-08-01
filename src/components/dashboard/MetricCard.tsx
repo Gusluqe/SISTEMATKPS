@@ -37,7 +37,7 @@ export function MetricCard({
     : null;
 
   return (
-    <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5 flex flex-col gap-3 hover:border-white/[0.10] transition-colors duration-200">
+    <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5 flex flex-col gap-3 hover:border-white/[0.10] transition-colors duration-200">
       {/* Header row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -84,7 +84,7 @@ export function MetricCard({
           >
             {trend.value > 0 ? "+" : ""}{trend.value}%
           </span>
-          <span className="text-[11px] text-[#334155]">{trend.label}</span>
+          <span className="text-[11px] text-[#44597c]">{trend.label}</span>
         </div>
       )}
     </div>

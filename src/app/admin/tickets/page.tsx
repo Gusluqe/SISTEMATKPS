@@ -1,15 +1,24 @@
 import { Header } from "@/components/layout/Header";
 import { TicketTable } from "@/components/tickets/TicketTable";
 import { createAdminClient } from "@/lib/supabase/server";
+import { getAccess, Access } from "@/lib/access";
 import { Ticket, Technician } from "@/types";
 
-async function getData(): Promise<{ tickets: Ticket[]; technicians: Technician[] }> {
+async function getData(access: Access): Promise<{ tickets: Ticket[]; technicians: Technician[] }> {
   const supabase = await createAdminClient();
+
+  let ticketsQuery = supabase
+    .from("tickets")
+    .select("*, technician:technicians(id, name, email)")
+    .order("created_at", { ascending: false });
+
+  // Los técnicos solo ven los tickets de sus sectores habilitados
+  if (access.role === "technician") {
+    ticketsQuery = ticketsQuery.in("sector", access.sectors);
+  }
+
   const [ticketsRes, techsRes] = await Promise.all([
-    supabase
-      .from("tickets")
-      .select("*, technician:technicians(id, name, email)")
-      .order("created_at", { ascending: false }),
+    ticketsQuery,
     supabase.from("technicians").select("*").eq("active", true).order("name"),
   ]);
 
@@ -20,7 +29,8 @@ async function getData(): Promise<{ tickets: Ticket[]; technicians: Technician[]
 }
 
 export default async function TicketsPage() {
-  const { tickets, technicians } = await getData();
+  const access = await getAccess();
+  const { tickets, technicians } = await getData(access);
 
   return (
     <>

@@ -14,10 +14,29 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     const { password, ...rest } = body;
 
     // Update technicians table fields
-    const allowed = ["name", "email", "active"];
+    const allowed = ["name", "email", "active", "sectors", "role"];
     const dbUpdate = Object.fromEntries(
       Object.entries(rest).filter(([key]) => allowed.includes(key))
     );
+
+    if ("sectors" in dbUpdate) {
+      const validSectors = Array.isArray(dbUpdate.sectors)
+        ? (dbUpdate.sectors as string[]).filter((s) =>
+            ["sistemas", "ecommerce", "mantenimiento"].includes(s)
+          )
+        : [];
+      if (validSectors.length === 0) {
+        return NextResponse.json(
+          { error: "Seleccioná al menos un sector válido" },
+          { status: 400 }
+        );
+      }
+      dbUpdate.sectors = validSectors;
+    }
+
+    if ("role" in dbUpdate && dbUpdate.role !== "admin" && dbUpdate.role !== "technician") {
+      return NextResponse.json({ error: "Rol inválido" }, { status: 400 });
+    }
 
     let updated;
     if (Object.keys(dbUpdate).length > 0) {
@@ -48,11 +67,12 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     }
 
     if (updated?.auth_user_id) {
-      // Auth user already exists — update password/email if provided
-      if (password || dbUpdate.email) {
-        const authUpdate: Record<string, string> = {};
+      // Auth user already exists — update password/email/role if provided
+      if (password || dbUpdate.email || dbUpdate.role) {
+        const authUpdate: Record<string, unknown> = {};
         if (password) authUpdate.password = password;
         if (dbUpdate.email) authUpdate.email = dbUpdate.email as string;
+        if (dbUpdate.role) authUpdate.app_metadata = { role: dbUpdate.role };
         await supabase.auth.admin.updateUserById(updated.auth_user_id, authUpdate);
       }
     } else if (password) {
@@ -61,7 +81,8 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         email: updated.email,
         password,
         email_confirm: true,
-        user_metadata: { name: updated.name, role: "technician" },
+        user_metadata: { name: updated.name },
+        app_metadata: { role: updated.role === "admin" ? "admin" : "technician" },
       });
       if (authError) {
         if (authError.message.includes("already been registered")) {

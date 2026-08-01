@@ -15,7 +15,11 @@ export type TicketCategory =
   | "systems"
   | "users"
   | "ecommerce"
+  | "maintenance"
+  | "woxi"
   | "other";
+
+export type TicketSector = "sistemas" | "ecommerce" | "mantenimiento";
 
 export interface Ticket {
   id: string;
@@ -25,6 +29,7 @@ export interface Ticket {
   status: TicketStatus;
   priority: TicketPriority;
   category: TicketCategory;
+  sector: TicketSector;
   requester_name: string;
   requester_email: string;
   area: string;
@@ -64,6 +69,8 @@ export interface Technician {
   email: string;
   avatar_url: string | null;
   active: boolean;
+  sectors: TicketSector[];
+  role: "admin" | "technician";
   created_at: string;
 }
 
@@ -83,6 +90,7 @@ export interface CreateTicketInput {
   description: string;
   priority: TicketPriority;
   category: TicketCategory;
+  sector: TicketSector;
   requester_name: string;
   requester_email: string;
   area: string;
@@ -93,6 +101,7 @@ export interface UpdateTicketInput {
   status?: TicketStatus;
   priority?: TicketPriority;
   category?: TicketCategory;
+  sector?: TicketSector;
   technician_id?: string | null;
   title?: string;
   description?: string;
@@ -121,21 +130,52 @@ export const CATEGORY_LABELS: Record<TicketCategory, string> = {
   systems: "Sistemas",
   users: "Usuarios",
   ecommerce: "E-Commerce",
+  maintenance: "Mantenimiento",
+  woxi: "WOXI (Turnos)",
   other: "Otro",
 };
 
-export const AREA_OPTIONS = [
-  "Administración",
-  "Contabilidad",
-  "Recursos Humanos",
-  "Sistemas / IT",
-  "Ventas",
-  "Marketing",
-  "Operaciones",
-  "Logística",
-  "Gerencia",
-  "Atención al Cliente",
-  "Legal",
-  "Finanzas",
-  "Otro",
-];
+export const SECTOR_LABELS: Record<TicketSector, string> = {
+  sistemas: "Sistemas",
+  ecommerce: "E-Commerce",
+  mantenimiento: "Mantenimiento",
+};
+
+export const SECTOR_DESCRIPTIONS: Record<TicketSector, string> = {
+  sistemas: "PCs, internet, impresoras, sistemas y usuarios",
+  ecommerce: "Tienda online, pedidos web, publicaciones",
+  mantenimiento: "Edilicio: instalaciones, reparaciones, arreglos",
+};
+
+// Categorías que aplican a cada sector. Para ecommerce y mantenimiento
+// la categoría se fija sola al crear el ticket.
+export const SECTOR_CATEGORIES: Record<TicketSector, TicketCategory[]> = {
+  sistemas: ["hardware", "software", "internet", "printers", "systems", "users", "woxi", "other"],
+  ecommerce: ["ecommerce"],
+  mantenimiento: ["maintenance"],
+};
+
+// Sucursales agrupadas: el ticket queda asociado a la farmacia/depósito
+// desde donde escriben, y así se agrupan por sucursal.
+export const SUCURSAL_GROUPS: Record<string, string[]> = {
+  Farmacias: [
+    "Farmacia Alberdi",
+    "Farmacia Altos de Moreno",
+    "Farmacia Alvear",
+    "Farmacia Axion",
+    "Farmacia Belgrano",
+    "Farmacia Campos de Alvarez",
+    "Farmacia Castelli",
+    "Farmacia Catedral",
+    "Farmacia Cimerman",
+    "Farmacia Del Provincia",
+    "Farmacia del Pueblo",
+    "Farmacia Palomar",
+    "Farmacia Sobredo",
+    "Farmacia Vantage Merlo",
+  ],
+  "Droguería y Depósitos": ["Droguería Caso", "Depósito Catedral", "Depósito Alberdi"],
+  Oficinas: ["Administración", "Obras Sociales", "Recursos Humanos"],
+};
+
+export const SUCURSALES = Object.values(SUCURSAL_GROUPS).flat();

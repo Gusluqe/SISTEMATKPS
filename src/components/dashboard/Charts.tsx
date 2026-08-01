@@ -36,7 +36,7 @@ interface TooltipProps {
 function CustomTooltip({ active, payload, label }: TooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#1a1a2e] border border-white/[0.09] rounded-xl px-3.5 py-2.5 shadow-2xl">
+    <div className="bg-[#1c3054] border border-white/[0.09] rounded-xl px-3.5 py-2.5 shadow-2xl">
       {label && <p className="text-[11px] text-[#475569] mb-1.5 font-medium">{label}</p>}
       {payload.map((p) => (
         <p key={p.name} className="text-sm font-semibold" style={{ color: p.color }}>
@@ -63,15 +63,15 @@ export function CategoryChart({ metrics }: ChartsProps) {
 
   if (data.length === 0) {
     return (
-      <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5 flex flex-col items-center justify-center h-[290px]">
+      <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5 flex flex-col items-center justify-center h-[290px]">
         <p className="text-xs font-semibold text-[#475569] uppercase tracking-wider mb-2">Tickets por categoría</p>
-        <p className="text-sm text-[#334155]">Sin datos todavía</p>
+        <p className="text-sm text-[#44597c]">Sin datos todavía</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5">
+    <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5">
       <p className="text-xs font-semibold text-[#475569] uppercase tracking-wider mb-5">
         Tickets por categoría
       </p>
@@ -113,15 +113,15 @@ export function StatusChart({ metrics }: ChartsProps) {
 
   if (data.length === 0) {
     return (
-      <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5 flex flex-col items-center justify-center h-[290px]">
+      <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5 flex flex-col items-center justify-center h-[290px]">
         <p className="text-xs font-semibold text-[#475569] uppercase tracking-wider mb-2">Distribución por estado</p>
-        <p className="text-sm text-[#334155]">Sin datos todavía</p>
+        <p className="text-sm text-[#44597c]">Sin datos todavía</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#12121f] border border-white/[0.07] rounded-2xl p-5">
+    <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5">
       <p className="text-xs font-semibold text-[#475569] uppercase tracking-wider mb-5">
         Distribución por estado
       </p>
