@@ -1,9 +1,11 @@
 import { Header } from "@/components/layout/Header";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { CategoryChart, StatusChart, TrendChart, TrendPoint } from "@/components/dashboard/Charts";
+import { RecurrenceSection } from "@/components/dashboard/RecurrenceSection";
 import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
 import { createAdminClient } from "@/lib/supabase/server";
 import { slaState } from "@/lib/sla";
+import { detectRecurrences, RecurrentAction } from "@/lib/recurrence";
 import {
   Ticket as TicketIcon,
   AlertTriangle,
@@ -53,13 +55,16 @@ function weekLabel(d: Date): string {
 
 async function getDashboardData(period: string) {
   const supabase = await createAdminClient();
-  const [ticketsRes, techsRes] = await Promise.all([
+  const [ticketsRes, techsRes, actionsRes] = await Promise.all([
     supabase.from("tickets").select("*, technician:technicians(id, name)").order("created_at", { ascending: false }).limit(2000),
     supabase.from("technicians").select("*").eq("active", true).order("name"),
+    // Si la tabla aún no existe (migración 004 pendiente) queda vacío y no rompe
+    supabase.from("recurrent_actions").select("*").order("created_at", { ascending: false }).limit(20),
   ]);
 
   const all = (ticketsRes.data || []) as Ticket[];
   const technicians = techsRes.data || [];
+  const recurrentActions = (actionsRes.data || []) as RecurrentAction[];
 
   // Filtro de período (solo afecta métricas y gráficos; alertas y tendencia usan todo)
   const days = period === "all" ? null : parseInt(period);
@@ -178,7 +183,10 @@ async function getDashboardData(period: string) {
     };
   }).sort((a, b) => b.resolved - a.resolved);
 
-  return { metrics, techStats, slaPct, overdue, unassigned, staleWaiting, avgRating, ratedCount: rated.length, trend, areaRanking, sectors };
+  // --- Fallas recurrentes (siempre sobre el total, sin filtro de período) ---
+  const recurrenceAlerts = detectRecurrences(all, recurrentActions);
+
+  return { metrics, techStats, slaPct, overdue, unassigned, staleWaiting, avgRating, ratedCount: rated.length, trend, areaRanking, sectors, recurrenceAlerts, recurrentActions };
 }
 
 export default async function DashboardPage({
@@ -191,6 +199,7 @@ export default async function DashboardPage({
   const {
     metrics, techStats, slaPct, overdue, unassigned, staleWaiting,
     avgRating, ratedCount, trend, areaRanking, sectors,
+    recurrenceAlerts, recurrentActions,
   } = await getDashboardData(period);
 
   const totalTickets =
@@ -262,6 +271,9 @@ export default async function DashboardPage({
             </div>
           </div>
         )}
+
+        {/* Fallas recurrentes */}
+        <RecurrenceSection alerts={recurrenceAlerts} history={recurrentActions} />
 
         {/* Operational alert chips */}
         {(unassigned > 0 || staleWaiting > 0) && (
