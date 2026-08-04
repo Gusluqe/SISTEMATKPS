@@ -43,3 +43,6 @@ next-env.d.ts
 # logs y temporales
 *.log
 supabase/.temp/
+
+# Local Netlify folder
+.netlify
