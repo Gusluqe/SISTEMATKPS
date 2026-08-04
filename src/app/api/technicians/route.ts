@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { requireAccess } from "@/lib/access";
 
 export async function GET() {
   try {
+    const { response } = await requireAccess();
+    if (response) return response;
+
     const supabase = await createAdminClient();
     const { data, error } = await supabase
       .from("technicians")
@@ -20,6 +24,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const { response } = await requireAccess("admin");
+    if (response) return response;
+
     const body = await request.json();
     const { name, email, password } = body;
     const validSectors = Array.isArray(body.sectors)
@@ -35,9 +42,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 6) {
+    if (password.length < 12) {
       return NextResponse.json(
-        { error: "La contraseña debe tener al menos 6 caracteres" },
+        { error: "La contraseña debe tener al menos 12 caracteres" },
         { status: 400 }
       );
     }

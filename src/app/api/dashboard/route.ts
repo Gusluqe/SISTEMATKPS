@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { requireAccess } from "@/lib/access";
 import { DashboardMetrics, TicketCategory, TicketStatus, TicketPriority } from "@/types";
 
 export async function GET() {
   try {
+    const { response } = await requireAccess("admin");
+    if (response) return response;
+
     const supabase = await createAdminClient();
 
     const { data: tickets, error } = await supabase

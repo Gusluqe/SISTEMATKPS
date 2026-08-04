@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { sendTicketStatusChangedEmail, sendTicketPriorityChangedEmail, sendTicketAssignedToTechEmail, sendNewTicketToTeamEmail } from "@/lib/email/resend";
+import { requireAccess, canAccessSector } from "@/lib/access";
+import { sendTicketStatusChangedEmail, sendTicketPriorityChangedEmail, sendTicketAssignedToTechEmail, sendNewTicketToTeamEmail } from "@/lib/email/mailer";
 import { UpdateTicketInput } from "@/types";
 
 interface RouteContext {
@@ -9,6 +10,9 @@ interface RouteContext {
 
 export async function GET(_req: NextRequest, { params }: RouteContext) {
   try {
+    const { access, response } = await requireAccess();
+    if (response) return response;
+
     const { id } = await params;
     const supabase = await createAdminClient();
 
@@ -31,6 +35,10 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     if (!ticket)
       return NextResponse.json({ error: "Ticket no encontrado" }, { status: 404 });
 
+    if (!canAccessSector(access, ticket.sector)) {
+      return NextResponse.json({ error: "Ticket no encontrado" }, { status: 404 });
+    }
+
     return NextResponse.json(ticket);
   } catch (error) {
     console.error("[GET /api/tickets/[id]]", error);
@@ -40,6 +48,9 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
+    const { access, response } = await requireAccess();
+    if (response) return response;
+
     const { id } = await params;
     const body: UpdateTicketInput & { changed_by?: string } = await request.json();
     const supabase = await createAdminClient();
@@ -54,7 +65,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     if (!current)
       return NextResponse.json({ error: "Ticket no encontrado" }, { status: 404 });
 
-    const { changed_by = "Admin", ...rawFields } = body;
+    if (!canAccessSector(access, current.sector)) {
+      return NextResponse.json({ error: "Ticket no encontrado" }, { status: 404 });
+    }
+
+    // La identidad del que edita sale de la sesión, nunca del body
+    const changed_by = access.name;
+    const rawFields = body as Record<string, unknown>;
 
     // Whitelist: solo campos editables, nada de ticket_number/created_at/etc.
     const ALLOWED = ["status", "priority", "category", "sector", "technician_id", "title", "description", "attachments"];

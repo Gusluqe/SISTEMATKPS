@@ -1,5 +1,7 @@
-import { createHmac } from "crypto";
 import { Ticket, TicketPriority } from "@/types";
+
+// Lógica pura de SLA — sin dependencias de Node, se puede importar
+// tanto en el servidor como en componentes de cliente.
 
 // Tiempos de primera respuesta prometidos en la portada pública
 export const SLA_RESPONSE_HOURS: Record<TicketPriority, number> = {
@@ -8,8 +10,6 @@ export const SLA_RESPONSE_HOURS: Record<TicketPriority, number> = {
   medium: 24,
   low: 72,
 };
-
-export const SITE_URL = process.env.URL || "https://tkps.netlify.app";
 
 export function slaDeadline(ticket: Pick<Ticket, "created_at" | "priority">): Date {
   return new Date(
@@ -33,26 +33,4 @@ export function slaState(
   // "En riesgo" cuando queda menos del 25% del plazo
   const total = SLA_RESPONSE_HOURS[ticket.priority] * 3_600_000;
   return deadline - now < total * 0.25 ? "at_risk" : "pending";
-}
-
-// Tokens firmados con la service key: no requieren env vars nuevas y no son
-// adivinables sin acceso al servidor.
-function hmac(payload: string): string {
-  return createHmac("sha256", process.env.SUPABASE_SERVICE_ROLE_KEY || "")
-    .update(payload)
-    .digest("hex");
-}
-
-// Token del link de calificación que viaja en el email de "resuelto"
-export function ratingToken(ticketId: string): string {
-  return hmac(`rating:${ticketId}`).slice(0, 24);
-}
-
-export function ratingUrl(ticketId: string): string {
-  return `${SITE_URL}/api/tickets/${ticketId}/rating?t=${ratingToken(ticketId)}`;
-}
-
-// Clave que protege el endpoint de cron (la scheduled function la recalcula)
-export function cronKey(): string {
-  return hmac("cron-proteger-salud").slice(0, 32);
 }

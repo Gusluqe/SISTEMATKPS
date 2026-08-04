@@ -1,33 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
 import { generateTicketNumber } from "@/lib/utils";
-import { sendTicketCreatedEmail, sendNewTicketToTeamEmail } from "@/lib/email/resend";
-import { CreateTicketInput, TicketSector } from "@/types";
+import { requireAccess } from "@/lib/access";
+import { clientIp, rateLimited } from "@/lib/ratelimit";
+import { sendTicketCreatedEmail, sendNewTicketToTeamEmail } from "@/lib/email/mailer";
+import { TicketSector, SUCURSALES, CATEGORY_LABELS } from "@/types";
 
 const VALID_SECTORS: TicketSector[] = ["sistemas", "ecommerce", "mantenimiento"];
 
-// Rate limit del formulario público: 5 tickets por IP cada 10 minutos.
-// En serverless cada instancia tiene su propia memoria, pero igual frena
-// cualquier ráfaga de spam contra la misma instancia.
-const RATE_WINDOW_MS = 10 * 60 * 1000;
-const RATE_MAX = 5;
-const rateLog = new Map<string, number[]>();
-
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const hits = (rateLog.get(key) || []).filter((t) => now - t < RATE_WINDOW_MS);
-  if (hits.length >= RATE_MAX) {
-    rateLog.set(key, hits);
-    return true;
-  }
-  hits.push(now);
-  rateLog.set(key, hits);
-  if (rateLog.size > 1000) rateLog.clear();
-  return false;
-}
+// Validación de servidor del formulario público: el cliente ya valida con zod,
+// pero el endpoint es público y no puede confiar en el body.
+const createTicketSchema = z.object({
+  requester_name: z.string().trim().min(2).max(120),
+  requester_email: z.string().trim().email().max(200),
+  area: z.string().refine((a) => SUCURSALES.includes(a), "Sucursal inválida"),
+  priority: z.enum(["low", "medium", "high", "urgent"]),
+  category: z.enum(Object.keys(CATEGORY_LABELS) as [string, ...string[]]),
+  title: z.string().trim().min(5).max(200),
+  description: z.string().trim().min(10).max(5000),
+  sector: z.enum(VALID_SECTORS).optional(),
+  attachments: z.array(z.string().url().max(500)).max(5).optional(),
+});
 
 export async function GET(request: NextRequest) {
   try {
+    const { access, response } = await requireAccess();
+    if (response) return response;
+
     const supabase = await createAdminClient();
     const { searchParams } = new URL(request.url);
 
@@ -40,6 +40,11 @@ export async function GET(request: NextRequest) {
       `
       )
       .order("created_at", { ascending: false });
+
+    // Aislamiento por sector: técnicos solo ven los sectores asignados
+    if (access.role !== "admin") {
+      query = query.in("sector", access.sectors);
+    }
 
     const status = searchParams.get("status");
     const priority = searchParams.get("priority");
@@ -59,10 +64,8 @@ export async function GET(request: NextRequest) {
     const perPage = Math.min(parseInt(searchParams.get("per_page") || "") || 50, 200);
     if (Number.isInteger(page) && page >= 0) {
       query = query.range(page * perPage, page * perPage + perPage - 1);
-    } else if (limit) {
-      query = query.limit(parseInt(limit));
     } else {
-      query = query.limit(1000);
+      query = query.limit(Math.min(parseInt(limit || "") || 1000, 1000));
     }
 
     const { data, error } = await query;
@@ -77,24 +80,26 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    if (rateLimited(ip)) {
+    // 5 tickets por IP cada 10 minutos (anti-ráfaga, por instancia)
+    if (rateLimited("tickets", clientIp(request), 5, 10 * 60 * 1000)) {
       return NextResponse.json(
         { error: "Demasiadas solicitudes seguidas. Esperá unos minutos y volvé a intentar." },
         { status: 429 }
       );
     }
 
-    const body: CreateTicketInput = await request.json();
-
+    const parsed = createTicketSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Datos inválidos. Revisá los campos del formulario." },
+        { status: 400 }
+      );
+    }
+    const body = parsed.data;
     const { requester_name, requester_email, area, priority, category, title, description } = body;
 
-    if (!requester_name || !requester_email || !area || !priority || !category || !title || !description) {
-      return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
-    }
-
-    // Sector destino: si no viene (o es inválido) se deriva de la categoría
-    const sector: TicketSector = VALID_SECTORS.includes(body.sector)
+    // Sector destino: si no viene se deriva de la categoría
+    const sector: TicketSector = body.sector
       ? body.sector
       : category === "ecommerce"
       ? "ecommerce"

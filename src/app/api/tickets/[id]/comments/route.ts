@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { sendNewCommentEmail, sendNewCommentToTechEmail } from "@/lib/email/resend";
+import { requireAccess, canAccessSector } from "@/lib/access";
+import { sendNewCommentEmail, sendNewCommentToTechEmail } from "@/lib/email/mailer";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -8,18 +9,40 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, { params }: RouteContext) {
   try {
-    const { id: ticket_id } = await params;
-    const { author_name, author_email, content, is_internal } =
-      await request.json();
+    const { access, response } = await requireAccess();
+    if (response) return response;
 
-    if (!author_name || !content) {
+    const { id: ticket_id } = await params;
+    const { content, is_internal } = await request.json();
+
+    // La identidad del autor sale de la sesión, nunca del body
+    const author_name = access.name;
+    const author_email = access.email;
+
+    if (!content || typeof content !== "string" || content.trim().length === 0) {
       return NextResponse.json(
         { error: "Faltan campos obligatorios" },
         { status: 400 }
       );
     }
+    if (content.length > 5000) {
+      return NextResponse.json(
+        { error: "El comentario es demasiado largo" },
+        { status: 400 }
+      );
+    }
 
     const supabase = await createAdminClient();
+
+    const { data: ticket } = await supabase
+      .from("tickets")
+      .select("*, technician:technicians(id, name, email)")
+      .eq("id", ticket_id)
+      .single();
+
+    if (!ticket || !canAccessSector(access, ticket.sector)) {
+      return NextResponse.json({ error: "Ticket no encontrado" }, { status: 404 });
+    }
 
     const { data, error } = await supabase
       .from("ticket_comments")
@@ -34,12 +57,6 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       .single();
 
     if (error) throw error;
-
-    const { data: ticket } = await supabase
-      .from("tickets")
-      .select("*, technician:technicians(id, name, email)")
-      .eq("id", ticket_id)
-      .single();
 
     // Un comentario público que no es del solicitante cuenta como primera
     // respuesta del equipo (SLA)

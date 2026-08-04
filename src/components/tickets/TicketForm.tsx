@@ -93,11 +93,17 @@ export function TicketForm() {
     setValue("category", SECTOR_CATEGORIES[s][0]);
   };
 
+  const MAX_FILES = 5;
+
   const addFiles = (files: FileList | null) => {
     if (!files) return;
     setUploadError(null);
     const next: AttachedFile[] = [];
     for (const file of Array.from(files)) {
+      if (attachedFiles.length + next.length >= MAX_FILES) {
+        setUploadError(`Máximo ${MAX_FILES} archivos por ticket`);
+        break;
+      }
       if (file.size > 5 * 1024 * 1024) {
         setUploadError(`"${file.name}" supera el límite de 5 MB`);
         continue;

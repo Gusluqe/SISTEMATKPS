@@ -36,4 +36,11 @@ const { data: tech, error: techErr } = await supabase
   .single();
 if (techErr) throw techErr;
 
+// Sincronizar el rol en app_metadata para que el proxy enrute correctamente
+// (la autorización real igual se resuelve contra la tabla en getAccess)
+const { error: metaErr } = await supabase.auth.admin.updateUserById(authUser.id, {
+  app_metadata: { role: tech.role === "admin" ? "admin" : "technician" },
+});
+if (metaErr) throw metaErr;
+
 console.log("Vinculado:", JSON.stringify(tech, null, 2));

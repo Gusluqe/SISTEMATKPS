@@ -1,5 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { createAdminClient } from "@/lib/supabase/server";
+import { getAccess } from "@/lib/access";
+import { redirect } from "next/navigation";
 import { Technician } from "@/types";
 import { TechnicianManager, TechStats } from "@/components/technicians/TechnicianManager";
 
@@ -59,6 +61,10 @@ async function getData(): Promise<{
 }
 
 export default async function TechniciansPage() {
+  const access = await getAccess();
+  if (!access) redirect("/admin/login");
+  if (access.role !== "admin") redirect("/admin/tickets");
+
   const { technicians, stats } = await getData();
   const activeCount = technicians.filter((t) => t.active).length;
 

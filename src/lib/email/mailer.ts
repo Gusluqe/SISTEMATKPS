@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import { Ticket } from "@/types";
-import { ratingUrl } from "@/lib/sla";
+import { ratingUrl } from "@/lib/tokens";
 import {
   ticketCreatedTemplate,
   ticketStatusChangedTemplate,
@@ -11,6 +11,14 @@ import {
   newTicketForTeamTemplate,
   slaReminderTemplate,
 } from "./templates";
+
+// Envío por Gmail (nodemailer). Sin estas variables NINGÚN email sale:
+// cargarlas también en Netlify (Site settings → Environment variables).
+if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+  console.warn(
+    "[Email] ⚠️ Faltan GMAIL_USER y/o GMAIL_APP_PASSWORD: no va a salir ningún email de notificación."
+  );
+}
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -25,6 +33,10 @@ const FROM = `"Soporte Técnico · Proteger Salud" <${process.env.GMAIL_USER}>`;
 async function send(to: string | null | undefined, subject: string, html: string) {
   // Los técnicos sin email cargado simplemente no reciben avisos
   if (!to) return { success: false, error: "No recipient" };
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.error("[Email] No configurado (GMAIL_USER/GMAIL_APP_PASSWORD): no se envió", subject);
+    return { success: false, error: "Email not configured" };
+  }
   try {
     await transporter.sendMail({ from: FROM, to, subject, html });
     return { success: true };
@@ -37,6 +49,10 @@ async function send(to: string | null | undefined, subject: string, html: string
 async function sendBcc(emails: (string | null | undefined)[], subject: string, html: string) {
   const bcc = emails.filter((e): e is string => Boolean(e));
   if (bcc.length === 0) return { success: false, error: "No recipients" };
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.error("[Email] No configurado (GMAIL_USER/GMAIL_APP_PASSWORD): no se envió", subject);
+    return { success: false, error: "Email not configured" };
+  }
   try {
     // BCC: cada técnico recibe el aviso sin ver los emails del resto
     await transporter.sendMail({ from: FROM, bcc, subject, html });

@@ -1,6 +1,17 @@
 import { Ticket, STATUS_LABELS, PRIORITY_LABELS, SECTOR_LABELS, CATEGORY_LABELS } from "@/types";
 import { formatDate } from "@/lib/utils";
 
+// Escape de valores de usuario interpolados en el HTML de los emails:
+// el formulario es público, sin esto el correo es un relay de phishing.
+function esc(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function ticketCreatedTemplate(ticket: Ticket): {
   subject: string;
   html: string;
@@ -58,7 +69,7 @@ export function ticketCreatedTemplate(ticket: Ticket): {
                   <tr>
                     <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
                       <span style="font-size:12px;color:#64748b;display:block;">Título</span>
-                      <span style="font-size:14px;color:#f1f5f9;font-weight:600;">${ticket.title}</span>
+                      <span style="font-size:14px;color:#f1f5f9;font-weight:600;">${esc(ticket.title)}</span>
                     </td>
                   </tr>
                   <tr>
@@ -92,7 +103,7 @@ export function ticketCreatedTemplate(ticket: Ticket): {
                   <tr>
                     <td style="padding:8px 0;">
                       <span style="font-size:12px;color:#64748b;display:block;">Descripción</span>
-                      <span style="font-size:13px;color:#94a3b8;line-height:1.5;">${ticket.description}</span>
+                      <span style="font-size:13px;color:#94a3b8;line-height:1.5;">${esc(ticket.description)}</span>
                     </td>
                   </tr>
                 </table>
@@ -171,17 +182,17 @@ export function ticketStatusChangedTemplate(
           <tr>
             <td style="padding:36px 40px;">
               <p style="margin:0 0 20px;font-size:15px;color:#94a3b8;">
-                Hola <strong style="color:#f1f5f9;">${ticket.requester_name}</strong>, tu ticket ha sido actualizado.
+                Hola <strong style="color:#f1f5f9;">${esc(ticket.requester_name)}</strong>, tu ticket ha sido actualizado.
               </p>
 
               ${techName ? `
               <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
                 <div style="width:36px;height:36px;border-radius:50%;background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                  <span style="font-size:14px;font-weight:700;color:#60a5fa;">${techName.charAt(0).toUpperCase()}</span>
+                  <span style="font-size:14px;font-weight:700;color:#60a5fa;">${esc(techName.charAt(0).toUpperCase())}</span>
                 </div>
                 <div>
                   <p style="margin:0;font-size:11px;color:#64748b;">TÉCNICO ASIGNADO</p>
-                  <p style="margin:2px 0 0;font-size:14px;color:#f1f5f9;font-weight:600;">${techName}</p>
+                  <p style="margin:2px 0 0;font-size:14px;color:#f1f5f9;font-weight:600;">${esc(techName)}</p>
                 </div>
               </div>` : ""}
 
@@ -192,7 +203,7 @@ export function ticketStatusChangedTemplate(
 
               <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:20px;">
                 <p style="margin:0 0 12px;font-size:12px;color:#00e5a0;text-transform:uppercase;letter-spacing:1px;">Ticket</p>
-                <p style="margin:0 0 4px;font-size:14px;color:#f1f5f9;font-weight:600;">${ticket.title}</p>
+                <p style="margin:0 0 4px;font-size:14px;color:#f1f5f9;font-weight:600;">${esc(ticket.title)}</p>
                 <p style="margin:0;font-size:12px;color:#475569;">Actualizado: ${formatDate(ticket.updated_at)}</p>
               </div>
 
@@ -310,8 +321,8 @@ export function ticketAssignedToTechTemplate(ticket: Ticket): {
               <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:24px;margin-bottom:20px;">
                 <p style="margin:0 0 16px;font-size:11px;color:#60a5fa;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Detalles del ticket</p>
 
-                <p style="margin:0 0 4px;font-size:16px;color:#f1f5f9;font-weight:700;">${ticket.title}</p>
-                <p style="margin:0 0 16px;font-size:13px;color:#64748b;">${ticket.requester_name} · ${ticket.area}</p>
+                <p style="margin:0 0 4px;font-size:16px;color:#f1f5f9;font-weight:700;">${esc(ticket.title)}</p>
+                <p style="margin:0 0 16px;font-size:13px;color:#64748b;">${esc(ticket.requester_name)} · ${esc(ticket.area)}</p>
 
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
                   <tr>
@@ -321,14 +332,14 @@ export function ticketAssignedToTechTemplate(ticket: Ticket): {
                     </td>
                     <td width="50%" style="padding-bottom:8px;">
                       <p style="margin:0 0 3px;font-size:10px;color:#475569;text-transform:uppercase;">Solicitante</p>
-                      <p style="margin:0;font-size:13px;color:#94a3b8;">${ticket.requester_email}</p>
+                      <p style="margin:0;font-size:13px;color:#94a3b8;">${esc(ticket.requester_email)}</p>
                     </td>
                   </tr>
                 </table>
 
                 <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px;">
                   <p style="margin:0 0 6px;font-size:10px;color:#475569;text-transform:uppercase;">Descripción</p>
-                  <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">${ticket.description.substring(0, 280)}${ticket.description.length > 280 ? "..." : ""}</p>
+                  <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">${esc(ticket.description.substring(0, 280))}${ticket.description.length > 280 ? "..." : ""}</p>
                 </div>
               </div>
 
@@ -413,7 +424,7 @@ export function ticketPriorityChangedTemplate(
           <tr>
             <td style="padding:36px 40px;">
               <p style="margin:0 0 24px;font-size:15px;color:#94a3b8;line-height:1.6;">
-                Hola <strong style="color:#f1f5f9;">${ticket.requester_name}</strong>,
+                Hola <strong style="color:#f1f5f9;">${esc(ticket.requester_name)}</strong>,
                 tu solicitud de soporte fue evaluada por nuestro equipo técnico.
               </p>
 
@@ -425,11 +436,11 @@ export function ticketPriorityChangedTemplate(
                   <tr>
                     <td style="padding-right:14px;">
                       <div style="width:44px;height:44px;border-radius:50%;background:rgba(37,99,235,0.15);border:2px solid rgba(37,99,235,0.35);display:flex;align-items:center;justify-content:center;text-align:center;line-height:44px;">
-                        <span style="font-size:18px;font-weight:700;color:#60a5fa;">${techName.charAt(0).toUpperCase()}</span>
+                        <span style="font-size:18px;font-weight:700;color:#60a5fa;">${esc(techName.charAt(0).toUpperCase())}</span>
                       </div>
                     </td>
                     <td>
-                      <p style="margin:0;font-size:16px;color:#f1f5f9;font-weight:700;">${techName}</p>
+                      <p style="margin:0;font-size:16px;color:#f1f5f9;font-weight:700;">${esc(techName)}</p>
                       <p style="margin:4px 0 0;font-size:12px;color:#475569;">tomó tu caso y lo está atendiendo</p>
                     </td>
                   </tr>
@@ -462,7 +473,7 @@ export function ticketPriorityChangedTemplate(
               <!-- TICKET INFO -->
               <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;margin-bottom:20px;">
                 <p style="margin:0 0 4px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Tu solicitud</p>
-                <p style="margin:0;font-size:14px;color:#f1f5f9;font-weight:600;">${ticket.title}</p>
+                <p style="margin:0;font-size:14px;color:#f1f5f9;font-weight:600;">${esc(ticket.title)}</p>
               </div>
 
               <!-- INFO NOTE -->
@@ -527,14 +538,14 @@ export function newCommentTemplate(
         </tr>
         <tr>
           <td style="padding:36px 40px;">
-            <p style="margin:0 0 20px;font-size:15px;color:#94a3b8;">Hola <strong style="color:#f1f5f9;">${ticket.requester_name}</strong>, el equipo técnico dejó un comentario en tu ticket.</p>
+            <p style="margin:0 0 20px;font-size:15px;color:#94a3b8;">Hola <strong style="color:#f1f5f9;">${esc(ticket.requester_name)}</strong>, el equipo técnico dejó un comentario en tu ticket.</p>
             <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(0,229,160,0.12);padding:20px;margin-bottom:20px;">
-              <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#00e5a0;">${authorName}</p>
-              <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.7;white-space:pre-wrap;">${commentContent}</p>
+              <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#00e5a0;">${esc(authorName)}</p>
+              <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.7;white-space:pre-wrap;">${esc(commentContent)}</p>
             </div>
             <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;">
               <p style="margin:0 0 4px;font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:1px;">Tu ticket</p>
-              <p style="margin:0;font-size:14px;color:#f1f5f9;font-weight:600;">${ticket.title}</p>
+              <p style="margin:0;font-size:14px;color:#f1f5f9;font-weight:600;">${esc(ticket.title)}</p>
             </div>
           </td>
         </tr>
@@ -587,15 +598,15 @@ export function newCommentForTechTemplate(
         </tr>
         <tr>
           <td style="padding:36px 40px;">
-            <p style="margin:0 0 20px;font-size:15px;color:#94a3b8;"><strong style="color:#f1f5f9;">${authorName}</strong> dejó un comentario en un ticket que tenés asignado.</p>
+            <p style="margin:0 0 20px;font-size:15px;color:#94a3b8;"><strong style="color:#f1f5f9;">${esc(authorName)}</strong> dejó un comentario en un ticket que tenés asignado.</p>
             <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(37,99,235,0.15);padding:20px;margin-bottom:20px;">
-              <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#60a5fa;">${authorName}</p>
-              <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.7;white-space:pre-wrap;">${commentContent}</p>
+              <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#60a5fa;">${esc(authorName)}</p>
+              <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.7;white-space:pre-wrap;">${esc(commentContent)}</p>
             </div>
             <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:16px 20px;">
               <p style="margin:0 0 4px;font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:1px;">Ticket</p>
-              <p style="margin:0;font-size:14px;color:#f1f5f9;font-weight:600;">${ticket.title}</p>
-              <p style="margin:4px 0 0;font-size:12px;color:#64748b;">${ticket.requester_name} · ${ticket.area}</p>
+              <p style="margin:0;font-size:14px;color:#f1f5f9;font-weight:600;">${esc(ticket.title)}</p>
+              <p style="margin:4px 0 0;font-size:12px;color:#64748b;">${esc(ticket.requester_name)} · ${esc(ticket.area)}</p>
             </div>
           </td>
         </tr>
@@ -654,9 +665,9 @@ export function slaReminderTemplate(
               <strong style="color:#ef4444;">${hoursOverdue}h más que el tiempo prometido</strong> sin primera respuesta del equipo.
             </p>
             <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:24px;margin-bottom:20px;">
-              <p style="margin:0 0 4px;font-size:16px;color:#f1f5f9;font-weight:700;">${ticket.title}</p>
-              <p style="margin:0 0 12px;font-size:13px;color:#64748b;">${ticket.requester_name} · ${ticket.area}</p>
-              <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">${ticket.description.substring(0, 200)}${ticket.description.length > 200 ? "..." : ""}</p>
+              <p style="margin:0 0 4px;font-size:16px;color:#f1f5f9;font-weight:700;">${esc(ticket.title)}</p>
+              <p style="margin:0 0 12px;font-size:13px;color:#64748b;">${esc(ticket.requester_name)} · ${esc(ticket.area)}</p>
+              <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">${esc(ticket.description.substring(0, 200))}${ticket.description.length > 200 ? "..." : ""}</p>
             </div>
             <div style="padding:14px 16px;background:rgba(239,68,68,0.06);border-left:3px solid #ef4444;border-radius:4px;">
               <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">
@@ -740,14 +751,14 @@ export function newTicketForTeamTemplate(ticket: Ticket): {
             <td style="padding:36px 40px;">
               <p style="margin:0 0 24px;font-size:15px;color:#94a3b8;line-height:1.6;">
                 Entró un ticket nuevo para el equipo de <strong style="color:#f1f5f9;">${sectorLabel}</strong>
-                desde <strong style="color:#00e5a0;">${ticket.area}</strong>.
+                desde <strong style="color:#00e5a0;">${esc(ticket.area)}</strong>.
               </p>
 
               <div style="background:#1c3054;border-radius:12px;border:1px solid rgba(255,255,255,0.06);padding:24px;margin-bottom:20px;">
                 <p style="margin:0 0 16px;font-size:11px;color:#00e5a0;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Detalles del ticket</p>
 
-                <p style="margin:0 0 4px;font-size:16px;color:#f1f5f9;font-weight:700;">${ticket.title}</p>
-                <p style="margin:0 0 16px;font-size:13px;color:#64748b;">${ticket.requester_name} · ${ticket.area}</p>
+                <p style="margin:0 0 4px;font-size:16px;color:#f1f5f9;font-weight:700;">${esc(ticket.title)}</p>
+                <p style="margin:0 0 16px;font-size:13px;color:#64748b;">${esc(ticket.requester_name)} · ${esc(ticket.area)}</p>
 
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
                   <tr>
@@ -757,14 +768,14 @@ export function newTicketForTeamTemplate(ticket: Ticket): {
                     </td>
                     <td width="50%" style="padding-bottom:8px;">
                       <p style="margin:0 0 3px;font-size:10px;color:#475569;text-transform:uppercase;">Solicitante</p>
-                      <p style="margin:0;font-size:13px;color:#94a3b8;">${ticket.requester_email}</p>
+                      <p style="margin:0;font-size:13px;color:#94a3b8;">${esc(ticket.requester_email)}</p>
                     </td>
                   </tr>
                 </table>
 
                 <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px;">
                   <p style="margin:0 0 6px;font-size:10px;color:#475569;text-transform:uppercase;">Descripción</p>
-                  <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">${ticket.description.substring(0, 280)}${ticket.description.length > 280 ? "..." : ""}</p>
+                  <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">${esc(ticket.description.substring(0, 280))}${ticket.description.length > 280 ? "..." : ""}</p>
                 </div>
               </div>
 

@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { TicketPriority, TicketStatus, TicketCategory } from "@/types";
 
@@ -8,12 +8,31 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Zona horaria fija: el servidor (Netlify) corre en UTC pero las fechas se
+// muestran siempre en hora argentina, en emails y UI por igual.
+const TZ = "America/Argentina/Buenos_Aires";
+
+const dateFmt = new Intl.DateTimeFormat("es-AR", {
+  timeZone: TZ,
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
+const timeFmt = new Intl.DateTimeFormat("es-AR", {
+  timeZone: TZ,
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
 export function formatDate(date: string | Date) {
-  return format(new Date(date), "dd/MM/yyyy HH:mm", { locale: es });
+  const d = new Date(date);
+  return `${dateFmt.format(d)} ${timeFmt.format(d)}`;
 }
 
 export function formatDateShort(date: string | Date) {
-  return format(new Date(date), "dd/MM/yyyy", { locale: es });
+  return dateFmt.format(new Date(date));
 }
 
 export function formatRelative(date: string | Date) {

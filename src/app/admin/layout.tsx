@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/layout/Sidebar";
 import { headers } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { getAccess } from "@/lib/access";
 
 export default async function AdminLayout({
   children,
@@ -14,11 +15,12 @@ export default async function AdminLayout({
     return <>{children}</>;
   }
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const role = ((user?.app_metadata?.role ?? user?.user_metadata?.role) as string) || "admin";
-  const userName = (user?.user_metadata?.name as string) || user?.email?.split("@")[0] || "Usuario";
-  const userEmail = user?.email || "";
+  const access = await getAccess();
+  if (!access) redirect("/admin/login");
+
+  const role = access.role;
+  const userName = access.name;
+  const userEmail = access.email;
 
   return (
     <div className="flex min-h-screen bg-[#081428]">

@@ -4,6 +4,8 @@ import { CategoryChart, StatusChart, TrendChart, TrendPoint } from "@/components
 import { RecurrenceSection } from "@/components/dashboard/RecurrenceSection";
 import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
 import { createAdminClient } from "@/lib/supabase/server";
+import { getAccess } from "@/lib/access";
+import { redirect } from "next/navigation";
 import { slaState } from "@/lib/sla";
 import { detectRecurrences, RecurrentAction } from "@/lib/recurrence";
 import {
@@ -194,6 +196,10 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ p?: string }>;
 }) {
+  const access = await getAccess();
+  if (!access) redirect("/admin/login");
+  if (access.role !== "admin") redirect("/admin/tickets");
+
   const { p } = await searchParams;
   const period = PERIODS.some((x) => x.key === p) ? (p as string) : "all";
   const {

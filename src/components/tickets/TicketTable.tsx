@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Ticket,
   Technician,
@@ -14,7 +15,8 @@ import {
 } from "@/types";
 import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
 import { formatDate, formatRelative } from "@/lib/utils";
-import { ArrowUpDown, Search, Filter, ChevronRight, SlidersHorizontal, X, Download } from "lucide-react";
+import { slaState } from "@/lib/sla";
+import { ArrowUpDown, Search, Filter, ChevronRight, SlidersHorizontal, X, Download, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TicketTableProps {
@@ -32,6 +34,36 @@ const priorityOrder: Record<TicketPriority, number> = {
 const statusOrder: Record<TicketStatus, number> = {
   open: 5, in_progress: 4, waiting: 3, resolved: 2, closed: 1,
 };
+
+// Estado de SLA visible en la cola: el técnico ve qué está por vencer
+// sin tener que ir al dashboard. Solo aplica a tickets activos.
+function SlaBadge({ ticket, mounted }: { ticket: Ticket; mounted: boolean }) {
+  if (!mounted || ["resolved", "closed"].includes(ticket.status)) return null;
+  const state = slaState(ticket);
+  if (state === "breached")
+    return (
+      <span className="inline-block mt-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/25">
+        SLA vencido
+      </span>
+    );
+  if (state === "at_risk")
+    return (
+      <span className="inline-block mt-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">
+        SLA por vencer
+      </span>
+    );
+  return null;
+}
+
+function RatingStars({ rating }: { rating: number | null }) {
+  if (!rating) return null;
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-amber-400">
+      <Star className="w-3 h-3 fill-amber-400" />
+      {rating}/5
+    </span>
+  );
+}
 
 function SortBtn({
   field,
@@ -62,23 +94,75 @@ function SortBtn({
   );
 }
 
+const PAGE_SIZE = 100;
+
 export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
+  const router = useRouter();
+  // Los filtros se inicializan desde la URL: los links del dashboard
+  // (?status=open, ?sector=x) y las vistas compartidas funcionan directo.
+  const params = useSearchParams();
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<TicketStatus | "all">("all");
-  const [filterPriority, setFilterPriority] = useState<TicketPriority | "all">("all");
-  const [filterCategory, setFilterCategory] = useState<TicketCategory | "all">("all");
-  const [filterSector, setFilterSector] = useState<TicketSector | "all">("all");
-  const [filterSucursal, setFilterSucursal] = useState<string>("all");
-  const [filterTechnician, setFilterTechnician] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<TicketStatus | "all">(
+    (params.get("status") as TicketStatus) || "all"
+  );
+  const [filterPriority, setFilterPriority] = useState<TicketPriority | "all">(
+    (params.get("priority") as TicketPriority) || "all"
+  );
+  const [filterCategory, setFilterCategory] = useState<TicketCategory | "all">(
+    (params.get("category") as TicketCategory) || "all"
+  );
+  const [filterSector, setFilterSector] = useState<TicketSector | "all">(
+    (params.get("sector") as TicketSector) || "all"
+  );
+  const [filterSucursal, setFilterSucursal] = useState<string>(params.get("area") || "all");
+  const [filterTechnician, setFilterTechnician] = useState<string>(params.get("tech") || "all");
+  const [filterSla, setFilterSla] = useState<string>(params.get("sla") || "all");
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({
     field: "created_at",
     dir: "desc",
   });
   const [showFilters, setShowFilters] = useState(false);
 
+  // El estado de SLA depende de Date.now(): se muestra recién tras hidratar
+  // para no generar diferencias entre el HTML del servidor y el cliente.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
+  // Paginación atada a los filtros: si cambia cualquier filtro, la clave
+  // cambia y se vuelve a la primera página sin necesidad de un effect.
+  const filterKey = [filterStatus, filterPriority, filterCategory, filterSector, filterSucursal, filterTechnician, filterSla, search].join("|");
+  const [pagination, setPagination] = useState({ key: filterKey, count: PAGE_SIZE });
+  const visibleCount = pagination.key === filterKey ? pagination.count : PAGE_SIZE;
+
+  // La cola se refresca sola cada 60 s (solo con la pestaña visible)
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, 60_000);
+    return () => clearInterval(t);
+  }, [router]);
+
+  // Refleja los filtros en la URL (sin recargar) para poder compartir la vista
+  useEffect(() => {
+    const q = new URLSearchParams();
+    if (filterStatus !== "all") q.set("status", filterStatus);
+    if (filterPriority !== "all") q.set("priority", filterPriority);
+    if (filterCategory !== "all") q.set("category", filterCategory);
+    if (filterSector !== "all") q.set("sector", filterSector);
+    if (filterSucursal !== "all") q.set("area", filterSucursal);
+    if (filterTechnician !== "all") q.set("tech", filterTechnician);
+    if (filterSla !== "all") q.set("sla", filterSla);
+    const qs = q.toString();
+    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+  }, [filterStatus, filterPriority, filterCategory, filterSector, filterSucursal, filterTechnician, filterSla]);
+
   const hasActiveFilters =
     filterStatus !== "all" || filterPriority !== "all" || filterCategory !== "all" ||
-    filterSector !== "all" || filterSucursal !== "all" || filterTechnician !== "all";
+    filterSector !== "all" || filterSucursal !== "all" || filterTechnician !== "all" ||
+    filterSla !== "all";
 
   const clearFilters = () => {
     setFilterStatus("all");
@@ -87,6 +171,7 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
     setFilterSector("all");
     setFilterSucursal("all");
     setFilterTechnician("all");
+    setFilterSla("all");
   };
 
   // Sucursales presentes en los tickets (incluye valores viejos)
@@ -114,7 +199,14 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
           : filterTechnician === "unassigned"
           ? !t.technician_id
           : t.technician_id === filterTechnician;
-      return matchSearch && matchStatus && matchPriority && matchCategory && matchSector && matchSucursal && matchTechnician;
+      const matchSla =
+        filterSla === "all"
+          ? true
+          : !["resolved", "closed"].includes(t.status) &&
+            (filterSla === "breached"
+              ? slaState(t) === "breached"
+              : slaState(t) === "at_risk");
+      return matchSearch && matchStatus && matchPriority && matchCategory && matchSector && matchSucursal && matchTechnician && matchSla;
     })
     .sort((a, b) => {
       const dir = sort.dir === "asc" ? 1 : -1;
@@ -130,7 +222,12 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
     });
 
   const exportCSV = () => {
-    const escape = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const escape = (v: string) => {
+      let s = String(v ?? "");
+      // Anti CSV-injection: Excel ejecuta como fórmula lo que empieza con =+-@
+      if (/^[=+\-@]/.test(s)) s = `'${s}`;
+      return `"${s.replace(/"/g, '""')}"`;
+    };
     const STATUS_ES: Record<string, string> = { open: "Abierto", in_progress: "En Proceso", waiting: "Esperando", resolved: "Resuelto", closed: "Cerrado" };
     const PRIORITY_ES: Record<string, string> = { low: "Baja", medium: "Media", high: "Alta", urgent: "Urgente" };
 
@@ -291,6 +388,17 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
             </select>
           )}
 
+          <select
+            value={filterSla}
+            onChange={(e) => setFilterSla(e.target.value)}
+            className="bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#94a3b8] focus:outline-none focus:border-[#00e5a0]/40 flex-1 min-w-[140px]"
+            aria-label="Filtrar por SLA"
+          >
+            <option value="all">SLA: todos</option>
+            <option value="breached">SLA vencido</option>
+            <option value="at_risk">SLA por vencer</option>
+          </select>
+
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
@@ -351,7 +459,7 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
                   </td>
                 </tr>
               ) : (
-                filtered.map((ticket) => (
+                filtered.slice(0, visibleCount).map((ticket) => (
                   <tr
                     key={ticket.id}
                     className="bg-[#13233f] hover:bg-[#1c3054] transition-colors cursor-pointer group"
@@ -372,6 +480,10 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
                     <td className="px-4 py-3">
                       <Link href={`/admin/tickets/${ticket.id}`} className="block">
                         <StatusBadge status={ticket.status} size="sm" />
+                        <div>
+                          <SlaBadge ticket={ticket} mounted={mounted} />
+                        </div>
+                        <RatingStars rating={ticket.rating} />
                       </Link>
                     </td>
                     <td className="px-4 py-3">
@@ -430,7 +542,7 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
             No se encontraron tickets con los filtros aplicados.
           </div>
         ) : (
-          filtered.map((ticket) => (
+          filtered.slice(0, visibleCount).map((ticket) => (
             <Link
               key={ticket.id}
               href={`/admin/tickets/${ticket.id}`}
@@ -444,6 +556,10 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
                   <StatusBadge status={ticket.status} size="sm" />
                   <PriorityBadge priority={ticket.priority} size="sm" />
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <SlaBadge ticket={ticket} mounted={mounted} />
+                <RatingStars rating={ticket.rating} />
               </div>
               <p className="text-sm text-[#e2e8f0] font-medium mb-1 line-clamp-2">
                 {ticket.title}
@@ -470,6 +586,18 @@ export function TicketTable({ tickets, technicians = [] }: TicketTableProps) {
           ))
         )}
       </div>
+
+      {/* Paginación: se muestran de a 100 para no colgar el navegador */}
+      {filtered.length > visibleCount && (
+        <div className="flex justify-center pt-1">
+          <button
+            onClick={() => setPagination({ key: filterKey, count: visibleCount + PAGE_SIZE })}
+            className="px-4 py-2 rounded-xl border border-white/10 bg-[#1c3054] text-sm font-medium text-[#94a3b8] hover:text-[#f1f5f9] hover:border-[#00e5a0]/30 transition-colors"
+          >
+            Mostrar más ({filtered.length - visibleCount} restantes)
+          </button>
+        </div>
+      )}
     </div>
   );
 }

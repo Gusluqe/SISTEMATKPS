@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Bell, Plus, Menu, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,30 @@ interface HeaderProps {
 export function Header({ title, subtitle }: HeaderProps) {
   const { toggle } = useSidebar();
   const router = useRouter();
+
+  // Avisos reales: tickets con SLA vencido y sin asignar (se refresca cada 60 s)
+  const [alerts, setAlerts] = useState<{ overdue: number; unassigned: number }>({
+    overdue: 0,
+    unassigned: 0,
+  });
+  useEffect(() => {
+    let cancelled = false;
+    const load = () =>
+      fetch("/api/notifications")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => {
+          if (!cancelled && j) setAlerts({ overdue: j.overdue || 0, unassigned: j.unassigned || 0 });
+        })
+        .catch(() => {});
+    load();
+    const t = setInterval(load, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, []);
+
+  const alertCount = alerts.overdue + alerts.unassigned;
 
   const signOut = async () => {
     const supabase = createClient();
@@ -54,13 +79,27 @@ export function Header({ title, subtitle }: HeaderProps) {
           <span className="sm:hidden">Nuevo</span>
         </Link>
 
-        <button
+        <Link
+          href={alerts.overdue > 0 ? "/admin/tickets?sla=breached" : "/admin/tickets?tech=unassigned"}
           className="relative w-8 h-8 rounded-xl bg-[#1c3054] border border-white/10 flex items-center justify-center text-[#64748b] hover:text-[#94a3b8] transition-colors"
-          aria-label="Notificaciones"
+          aria-label={
+            alertCount > 0
+              ? `${alerts.overdue} con SLA vencido, ${alerts.unassigned} sin asignar`
+              : "Sin avisos pendientes"
+          }
+          title={
+            alertCount > 0
+              ? `${alerts.overdue} con SLA vencido · ${alerts.unassigned} sin asignar`
+              : "Sin avisos pendientes"
+          }
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#00e5a0]" />
-        </button>
+          {alertCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+              {alertCount > 99 ? "99+" : alertCount}
+            </span>
+          )}
+        </Link>
 
         <button
           onClick={signOut}

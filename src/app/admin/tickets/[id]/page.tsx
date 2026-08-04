@@ -1,6 +1,6 @@
 import { Header } from "@/components/layout/Header";
 import { TicketDetail } from "@/components/tickets/TicketDetail";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { getAccess } from "@/lib/access";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -43,10 +43,10 @@ async function getTechnicians(): Promise<Technician[]> {
 export default async function TicketDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  const authClient = await createClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  const changedBy = user?.email ?? "Admin";
-  const authorName = (user?.user_metadata?.name as string) || user?.email?.split("@")[0] || "Admin";
+  const access = await getAccess();
+  if (!access) redirect("/admin/login");
+
+  const changedBy = access.name;
 
   const [ticket, technicians] = await Promise.all([
     getTicket(id),
@@ -56,7 +56,6 @@ export default async function TicketDetailPage({ params }: PageProps) {
   if (!ticket) notFound();
 
   // Un técnico no puede abrir tickets de sectores que no tiene habilitados
-  const access = await getAccess();
   if (access.role === "technician" && !access.sectors.includes(ticket.sector)) {
     redirect("/admin/tickets");
   }
@@ -77,7 +76,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
             Volver a Tickets
           </Link>
         </div>
-        <TicketDetail ticket={ticket} technicians={technicians} changedBy={changedBy} authorName={authorName} />
+        <TicketDetail ticket={ticket} technicians={technicians} changedBy={changedBy} />
       </main>
     </>
   );

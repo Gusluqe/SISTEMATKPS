@@ -174,9 +174,9 @@ function TechForm({
             type={showPwd ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder={isEdit ? "••••••••" : "Mínimo 6 caracteres"}
+            placeholder={isEdit ? "••••••••" : "Mínimo 12 caracteres"}
             required={!isEdit}
-            minLength={password ? 6 : undefined}
+            minLength={password ? 12 : undefined}
             className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-[#f8fafc] placeholder:text-[#44597c] focus:outline-none focus:border-[#00e5a0]/40 transition-colors"
           />
           <button

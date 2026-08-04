@@ -48,8 +48,9 @@ export async function proxy(request: NextRequest) {
     const isPublic =
       (request.method === "POST" &&
         (pathname === "/api/tickets" || pathname === "/api/attachments")) ||
-      (request.method === "GET" &&
-        (/^\/api\/tickets\/[^/]+\/rating$/.test(pathname) || pathname === "/api/cron"));
+      // Calificación desde el email: GET muestra confirmación, POST registra el voto
+      /^\/api\/tickets\/[^/]+\/rating$/.test(pathname) ||
+      (request.method === "GET" && pathname === "/api/cron");
 
     if (!isPublic && !user) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });

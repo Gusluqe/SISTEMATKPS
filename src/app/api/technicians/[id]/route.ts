@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { requireAccess } from "@/lib/access";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -7,6 +8,9 @@ interface RouteContext {
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
+    const { response } = await requireAccess("admin");
+    if (response) return response;
+
     const { id } = await params;
     const body = await request.json();
     const supabase = await createAdminClient();
@@ -59,9 +63,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     }
 
     // Update Supabase Auth user if password or email changed
-    if (password && password.length < 6) {
+    if (password && password.length < 12) {
       return NextResponse.json(
-        { error: "La contraseña debe tener al menos 6 caracteres" },
+        { error: "La contraseña debe tener al menos 12 caracteres" },
         { status: 400 }
       );
     }
@@ -108,6 +112,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
 export async function DELETE(_req: NextRequest, { params }: RouteContext) {
   try {
+    const { response } = await requireAccess("admin");
+    if (response) return response;
+
     const { id } = await params;
     const supabase = await createAdminClient();
 

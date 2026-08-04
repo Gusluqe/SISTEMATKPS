@@ -1,19 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
-import { CATEGORY_LABELS, TicketCategory } from "@/types";
+import { requireAccess } from "@/lib/access";
+import { CATEGORY_LABELS, TicketCategory, SUCURSALES } from "@/types";
+
+const recurrenceSchema = z.object({
+  area: z.string().refine((a) => SUCURSALES.includes(a), "Sucursal inválida"),
+  category: z.enum(Object.keys(CATEGORY_LABELS) as [string, ...string[]]),
+  action: z.string().trim().min(3).max(300),
+  note: z.string().trim().max(2000).optional().nullable(),
+});
 
 // Registra la acción tomada sobre una falla recurrente
-// (ej: "Se cambió la impresora de Farmacia Catedral"). Requiere sesión (middleware).
+// (ej: "Se cambió la impresora de Farmacia Catedral"). Solo admin.
 export async function POST(request: NextRequest) {
   try {
-    const { area, category, action, note, created_by } = await request.json();
+    const { access, response } = await requireAccess("admin");
+    if (response) return response;
 
-    if (!area || !category || !action) {
-      return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
+    const parsed = recurrenceSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
     }
-    if (!(category in CATEGORY_LABELS)) {
-      return NextResponse.json({ error: "Categoría inválida" }, { status: 400 });
-    }
+    const { area, category, action, note } = parsed.data;
 
     const supabase = await createAdminClient();
     const { data, error } = await supabase
@@ -23,7 +32,8 @@ export async function POST(request: NextRequest) {
         category: category as TicketCategory,
         action,
         note: note || null,
-        created_by: created_by || "Admin",
+        // La identidad sale de la sesión, no del body
+        created_by: access.name,
       })
       .select()
       .single();

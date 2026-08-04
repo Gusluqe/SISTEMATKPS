@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Ticket, Technician, STATUS_LABELS, CATEGORY_LABELS, PRIORITY_LABELS, SECTOR_LABELS } from "@/types";
 import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatRelative } from "@/lib/utils";
+import { slaState } from "@/lib/sla";
 import Image from "next/image";
 import {
   Clock,
@@ -21,16 +22,28 @@ import {
   Paperclip,
   FileText,
   Loader2,
+  Star,
+  AlertTriangle,
 } from "lucide-react";
+
+// Respuestas frecuentes: un click las carga en el cuadro de comentario
+const QUICK_REPLIES = [
+  "Estamos revisando tu caso, en breve te damos una respuesta.",
+  "Pasamos por la sucursal hoy a resolverlo.",
+  "Reiniciá el equipo y contanos si sigue pasando.",
+  "Escalado al proveedor, seguimos el reclamo de cerca.",
+  "Quedó resuelto de forma remota. Cualquier cosa avisanos.",
+];
 
 interface TicketDetailProps {
   ticket: Ticket;
   technicians: Technician[];
   changedBy?: string;
-  authorName?: string;
 }
 
-export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin", authorName = "Admin" }: TicketDetailProps) {
+// La identidad del autor/editor la resuelve el servidor desde la sesión;
+// changedBy queda solo como referencia visual optimista.
+export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin" }: TicketDetailProps) {
   const router = useRouter();
   const [ticket, setTicket] = useState(initial);
   const [isPending, startTransition] = useTransition();
@@ -40,8 +53,21 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
   const [activeTab, setActiveTab] = useState<"comments" | "history">("comments");
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [resolveOpen, setResolveOpen] = useState(false);
+  const [resolveNote, setResolveNote] = useState("");
+  const [resolving, setResolving] = useState(false);
+
+  // El estado de SLA usa Date.now(): se muestra recién tras hidratar para no
+  // desincronizar el HTML del servidor con el del cliente.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   const update = async (fields: Record<string, unknown>) => {
+    setActionError(null);
     startTransition(async () => {
       const res = await fetch(`/api/tickets/${ticket.id}`, {
         method: "PATCH",
@@ -52,22 +78,25 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
         const updated = await res.json();
         setTicket((prev) => ({ ...prev, ...updated }));
         router.refresh();
+      } else {
+        const json = await res.json().catch(() => ({}));
+        setActionError(json.error || "No se pudo guardar el cambio. Probá de nuevo.");
       }
     });
   };
 
-  const submitComment = async () => {
-    if (!comment.trim()) return;
+  const submitComment = async (content?: string, internal?: boolean) => {
+    const text = (content ?? comment).trim();
+    if (!text) return false;
+    setActionError(null);
     setAddingComment(true);
     try {
       const res = await fetch(`/api/tickets/${ticket.id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          author_name: authorName,
-          author_email: changedBy,
-          content: comment,
-          is_internal: isInternal,
+          content: text,
+          is_internal: internal ?? isInternal,
         }),
       });
       if (res.ok) {
@@ -76,11 +105,39 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
           ...prev,
           comments: [...(prev.comments || []), newComment],
         }));
-        setComment("");
+        if (content === undefined) setComment("");
         router.refresh();
+        return true;
       }
+      const json = await res.json().catch(() => ({}));
+      setActionError(json.error || "No se pudo agregar el comentario.");
+      return false;
     } finally {
       setAddingComment(false);
+    }
+  };
+
+  // Resolver exige una nota: queda como comentario visible al solicitante
+  // y le llega junto al email de "resuelto".
+  const confirmResolve = async () => {
+    if (!resolveNote.trim()) return;
+    setResolving(true);
+    try {
+      const ok = await submitComment(resolveNote, false);
+      if (!ok) return;
+      await update({ status: "resolved" });
+      setResolveOpen(false);
+      setResolveNote("");
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  const requestStatusChange = (status: string) => {
+    if (status === "resolved" && ticket.status !== "resolved") {
+      setResolveOpen(true);
+    } else {
+      update({ status });
     }
   };
 
@@ -124,8 +181,53 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 animate-fade-in">
+      {/* Modal: nota de resolución obligatoria */}
+      {resolveOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-[#13233f] border border-white/10 rounded-2xl p-6 w-full max-w-md">
+            <p className="text-sm font-bold text-[#f8fafc] mb-1">Marcar como resuelto</p>
+            <p className="text-xs text-[#64748b] mb-4">
+              Contale al solicitante qué se hizo. La nota queda como comentario
+              visible y le llega junto al aviso de resolución.
+            </p>
+            <textarea
+              value={resolveNote}
+              onChange={(e) => setResolveNote(e.target.value)}
+              placeholder="Ej: Se reinstaló el driver de la impresora y quedó imprimiendo en color."
+              rows={4}
+              autoFocus
+              className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-[#f8fafc] placeholder:text-[#44597c] resize-none focus:outline-none focus:border-[#00e5a0]/40 mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setResolveOpen(false)}
+                disabled={resolving}
+              >
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                onClick={confirmResolve}
+                loading={resolving}
+                disabled={!resolveNote.trim()}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Resolver ticket
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main content */}
       <div className="space-y-5">
+        {actionError && (
+          <div className="bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3 text-sm text-red-400">
+            {actionError}
+          </div>
+        )}
         {/* Header card */}
         <div className="bg-[#13233f] border border-white/[0.07] rounded-2xl p-5">
           <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -136,6 +238,24 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
             <PriorityBadge priority={ticket.priority} />
           </div>
           <h1 className="text-xl font-bold text-[#f8fafc] mb-2">{ticket.title}</h1>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            {mounted && !["resolved", "closed"].includes(ticket.status) && slaState(ticket) === "breached" && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-red-500/15 text-red-400 border border-red-500/25">
+                <AlertTriangle className="w-3 h-3" /> SLA vencido
+              </span>
+            )}
+            {mounted && !["resolved", "closed"].includes(ticket.status) && slaState(ticket) === "at_risk" && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                <Clock className="w-3 h-3" /> SLA por vencer
+              </span>
+            )}
+            {ticket.rating && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <Star className="w-3 h-3 fill-amber-400" />
+                Calificación: {ticket.rating}/5
+              </span>
+            )}
+          </div>
           <div className="flex flex-wrap gap-4 text-xs text-[#475569]">
             <span className="flex items-center gap-1.5">
               <User className="w-3.5 h-3.5" />
@@ -291,6 +411,19 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
 
                 {/* Add comment */}
                 <div className="pt-2 border-t border-white/[0.06]">
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {QUICK_REPLIES.map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setComment((c) => (c ? `${c}\n${r}` : r))}
+                        className="px-2 py-1 rounded-lg bg-[#1c3054] border border-white/[0.08] text-[11px] text-[#64748b] hover:text-[#94a3b8] hover:border-[#00e5a0]/25 transition-colors"
+                        title="Insertar respuesta rápida"
+                      >
+                        {r.length > 42 ? `${r.slice(0, 42)}…` : r}
+                      </button>
+                    ))}
+                  </div>
                   <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
@@ -313,7 +446,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
                       )}
                     </label>
                     <Button
-                      onClick={submitComment}
+                      onClick={() => submitComment()}
                       loading={addingComment}
                       disabled={!comment.trim()}
                       size="sm"
@@ -389,7 +522,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
                 size="sm"
                 className="w-full"
                 loading={isPending}
-                onClick={() => update({ status: "resolved" })}
+                onClick={() => setResolveOpen(true)}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 Marcar como resuelto
@@ -417,7 +550,7 @@ export function TicketDetail({ ticket: initial, technicians, changedBy = "Admin"
           </p>
           <select
             value={ticket.status}
-            onChange={(e) => update({ status: e.target.value })}
+            onChange={(e) => requestStatusChange(e.target.value)}
             disabled={isPending}
             className="w-full bg-[#1c3054] border border-white/10 rounded-xl px-3 py-2 text-sm text-[#f8fafc] focus:outline-none focus:border-[#00e5a0]/40"
           >
