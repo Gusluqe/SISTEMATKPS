@@ -1,7 +1,7 @@
 import { TicketForm } from "@/components/tickets/TicketForm";
-import { Lock, ArrowRight, CheckCircle, Clock, Zap } from "lucide-react";
+import { AdminLink } from "@/components/AdminLink";
+import { Lock, CheckCircle, Clock, Zap } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
 export default function Home() {
   return (
@@ -24,15 +24,7 @@ export default function Home() {
               <p className="text-[10px] text-[#475569] leading-none mt-0.5">Soporte Técnico</p>
             </div>
           </div>
-          <Link
-            href="/admin/dashboard"
-            className="flex items-center gap-1.5 min-h-[44px] px-3.5 -mr-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] text-xs font-medium text-[#94a3b8] hover:text-[#e2e8f0] hover:border-white/[0.16] active:bg-white/[0.10] active:scale-[0.97] transition-all"
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Panel Admin</span>
-            <span className="sm:hidden">Admin</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <AdminLink />
         </div>
       </div>
 

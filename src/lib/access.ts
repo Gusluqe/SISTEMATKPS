@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { TicketSector } from "@/types";
@@ -16,7 +17,9 @@ export interface Access {
 // desde /admin/technicians) es la fuente de verdad; app_metadata de Auth queda
 // como fallback. Sin sesión devuelve null; sin ficha ni metadata el usuario
 // queda como técnico sin sectores — nunca admin por omisión.
-export async function getAccess(): Promise<Access | null> {
+// cache(): memoiza por request — layout y página comparten el resultado en
+// lugar de repetir las llamadas de auth a Supabase.
+export const getAccess = cache(async (): Promise<Access | null> => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -59,7 +62,7 @@ export async function getAccess(): Promise<Access | null> {
   }
 
   return { role, sectors, email, name };
-}
+});
 
 type Granted = { access: Access; response: null };
 type Denied = { access: null; response: NextResponse };
