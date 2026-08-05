@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/lib/store/sidebar";
 import { createClient } from "@/lib/supabase/client";
+import { ChangePasswordButton } from "@/components/layout/ChangePasswordButton";
 import {
   LayoutDashboard,
   Ticket,
@@ -102,6 +103,8 @@ function SidebarContent({
           <ExternalLink className="w-4 h-4 flex-shrink-0" />
           <span>Ver formulario público</span>
         </Link>
+
+        <ChangePasswordButton />
 
         {/* User info + logout */}
         <div className="mx-1 mt-1 pt-2 border-t border-white/[0.04]">
